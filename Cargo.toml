@@ -1,0 +1,20 @@
+[package]
+name = "blueayachan"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+#[lib]
+#name = "Commands"
+#path = "src/commands.rs"
+
+
+[dependencies]
+anyhow = "1.0.63"
+chrono = "0.4.23"
+dotenv = "0.15.0"
+tokio = { version = "1.20.1", features = ["full"] }
+tracing = "0.1.36"
+tracing-subscriber = "0.3.15"
+twitch-irc =  "4.0.0"
+rand = "0.8.5"
