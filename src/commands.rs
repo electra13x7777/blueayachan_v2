@@ -40,13 +40,6 @@ impl EventHandler
     {
         self.command_map.insert(name, function);
     }
-    pub fn on_call(&mut self, name: String, argv: &[String]) -> Option<()>
-    {
-        let args = argv.iter().map(|ref x| format!("{}", &x)).collect::<Vec<String>>().join(", ");
-        //let arg_u8: [u8] = *args.as_bytes();
-        self.command_map[&name](args);
-        None
-    }
 }
 
 
@@ -74,21 +67,23 @@ pub async fn execute_command(name: String, client: Twitch_Client, msg: PrivmsgMe
             // Command Block
             b'!' =>
             {
+                let res = String::from(out(runtype_u8.to_string()));
                 let dt_fmt = chrono::offset::Local::now().format("%H:%M:%S").to_string();
-                println!("[{}] #{} <blueayachan>: {}", dt_fmt, msg.channel_login, out(runtype_u8.to_string()));
+                println!("[{}] #{} <blueayachan>: {}", dt_fmt, msg.channel_login, res);
                 client.say(
                         msg.channel_login.clone(),
-                format!("{}", out(runtype_u8.to_string()))
+                format!("{}", res)
                 ).await?;
             },
             // Help Block
             b'?' =>
             {
+                let res = String::from(out(runtype_u8.to_string()));
                 let dt_fmt = chrono::offset::Local::now().format("%H:%M:%S").to_string();
-                println!("[{}] #{} <blueayachan>: {}", dt_fmt, msg.channel_login, out(runtype_u8.to_string()));
+                println!("[{}] #{} <blueayachan>: {}", dt_fmt, msg.channel_login, res);
                 client.say(
-                        msg.channel_login.clone(),
-                format!("{}", out(runtype_u8.to_string())),
+                    msg.channel_login.clone(),
+                    format!("{}", res),
                 ).await?;
             },
             _ =>
