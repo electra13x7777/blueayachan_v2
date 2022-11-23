@@ -1,4 +1,6 @@
 /target
+/partials
 .env
 dreamboum_tweets_10_05_2022.txt
+grammar_parse.rs
 garbage.rs

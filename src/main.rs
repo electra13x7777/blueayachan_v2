@@ -22,7 +22,10 @@ use twitch_irc::
     ClientConfig, SecureTCPTransport, TwitchIRCClient,
 };
 pub mod commands;
+pub mod helpers;
 use crate::commands::Twitch_Client;
+use crate::commands::Callback;
+use crate::commands::EventHandler;
 
 //type Client = TwitchIRCClient<SecureTCPTransport, StaticLoginCredentials>;
 
@@ -68,41 +71,19 @@ async fn main() -> anyhow::Result<()>
 async fn handle_priv(client: Twitch_Client, msg: PrivmsgMessage)
 {
     //tracing::info!("Received message: {:#?}", msg);
-    let mut cmd_map: HashMap<&str, (String, String)/*Box<commands::Command>*/> = HashMap::new();
-    cmd_map.insert("dreamboumtweet", commands::dreamboumtweet());//Box::new(||{commands::dreamboumtweet()}));
+    //let mut cmd_map: HashMap<&str, Callback/*(String, String)Box<commands::Command>*/> = HashMap::new();
+    //cmd_map.insert("dreamboumtweet", &commands::dreamboumtweet());
+    //cmd_map.insert("speedgame", commands::speedgame());
+    //Box::new(||{commands::dreamboumtweet()}));
+    let mut handler = EventHandler { command_map: HashMap::new() };
+    handler.add_command("dreamboumtweet".to_string(), commands::dreamboumtweet);
+    //let map: HashMap<&str, Callback> = handler.command_map.clone();
     if msg.message_text.to_lowercase().starts_with("!")
        || msg.message_text.to_lowercase().starts_with("?")
     {
         let mut name: String = msg.message_text.clone();
         name = String::from(&name[1..name.len()]);
         //println!("{} {}", msg.message_text, name);
-        tokio::spawn(commands::execute_command(name, client, msg, cmd_map));
+        tokio::spawn(commands::execute_command(name, client, msg, handler.command_map));
     }
 }
-
-// TEMP test function
-async fn hello(client: Twitch_Client, msg: PrivmsgMessage) -> anyhow::Result<()>
-{
-    client
-    .say(
-            msg.channel_login.clone(),
-    format!("<( Hello, {}! )", &msg.sender.name),
-    )
-    .await?;
-    tokio::time::sleep(Duration::from_secs(2)).await;
-    client
-    .say(
-            msg.channel_login.clone(),
-    "<( How may I help you today? )".to_string(),
-    )
-    .await?;
-    Ok(())
-}
-/*
-type Command = Box<dyn FnOnce() -> anyhow::Result<()> + 'static>;
-pub struct CommandHandler
-{
-    name: String,
-    cmd: Command,
-}
-*/
