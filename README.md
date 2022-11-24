@@ -13,6 +13,7 @@
 
 ## DONE?
 * Callback that can interop with every command
-* Dreamboumtweets ported
+* Dreamboumtweets ported. Follow [@dreamboum](https://twitter.com/Dreamboum) please!
 
 ### More to come soon!
+[Blueayachan Version 1](https://github.com/electra13x7777/blueayachan)

@@ -71,17 +71,14 @@ async fn main() -> anyhow::Result<()>
 async fn handle_priv(client: Twitch_Client, msg: PrivmsgMessage)
 {
     //tracing::info!("Received message: {:#?}", msg);
-    //let mut cmd_map: HashMap<&str, Callback/*(String, String)Box<commands::Command>*/> = HashMap::new();
-    //cmd_map.insert("dreamboumtweet", &commands::dreamboumtweet());
-    //cmd_map.insert("speedgame", commands::speedgame());
-    //Box::new(||{commands::dreamboumtweet()}));
     let mut handler = EventHandler { command_map: HashMap::new() };
-    handler.add_command("dreamboumtweet".to_string(), commands::dreamboumtweet);
-    //let map: HashMap<&str, Callback> = handler.command_map.clone();
+    handler.add_command(String::from("test"), commands::test_command);
+    handler.add_command(String::from("dreamboumtweet"), commands::dreamboumtweet);
+
     if msg.message_text.to_lowercase().starts_with("!")
        || msg.message_text.to_lowercase().starts_with("?")
     {
-        let mut name: String = msg.message_text.clone();
+        let mut name: String = msg.message_text.to_lowercase().clone();
         name = String::from(&name[1..name.len()]);
         //println!("{} {}", msg.message_text, name);
         tokio::spawn(commands::execute_command(name, client, msg, handler.command_map));

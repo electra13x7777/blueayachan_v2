@@ -16,6 +16,9 @@ use std::
     io::{prelude::*, BufReader, Write},
 };
 
+// READING FILES //
+
+// text to list
 pub fn readlines_to_vec(filename: impl AsRef<Path>) -> io::Result<Vec<String>>
 {
     BufReader::new(File::open(filename)?).lines().collect()
