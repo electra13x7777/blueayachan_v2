@@ -1,6 +1,13 @@
-/target
+/assets
+/migrations
+/ops
 /partials
+
+/src/test_db_stuff.rs
+/src/models.rs
+/src/schema.rs
+/target
+/testing
 .env
-dreamboum_tweets_10_05_2022.txt
 grammar_parse.rs
 garbage.rs

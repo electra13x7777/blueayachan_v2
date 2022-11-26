@@ -22,10 +22,23 @@ use twitch_irc::
     ClientConfig, SecureTCPTransport, TwitchIRCClient,
 };
 pub mod commands;
+use crate::commands::
+{
+    Twitch_Client,
+    Callback,
+    EventHandler,
+    Runtype,
+};
+
 pub mod helpers;
-use crate::commands::Twitch_Client;
-use crate::commands::Callback;
-use crate::commands::EventHandler;
+use crate::helpers::readlines_to_vec;
+pub mod db_connect;
+pub mod models;
+pub mod schema;
+pub mod db_ops;
+#[macro_use]
+extern crate diesel;
+use crate::db_ops::{insert_dbtweet, query_dbtweet_to_vec};
 
 //type Client = TwitchIRCClient<SecureTCPTransport, StaticLoginCredentials>;
 
@@ -41,7 +54,14 @@ async fn main() -> anyhow::Result<()>
     env::var("OAUTH_TOKEN").context("missing OAUTH_TOKEN environment variable")?;
     // TODO: channels should be queried from a database
     let channel = env::var("CHANNEL_NAME").context("missing CHANNEL_NAME environment variable")?;
-
+    //let wink = env::var("WINK").context("missing CHANNEL_NAME environment variable")?;
+    let aya_vec = readlines_to_vec("assets/ayawink.txt");
+    let av_iter = aya_vec.iter();
+    for line in av_iter
+    {
+        //let f_line = format!("{}\n", line);
+        println!("{}", format!("{:#?}", line));
+    }
 
     let config =
     ClientConfig::new_simple(StaticLoginCredentials::new(bot_username, Some(oauth_token)));
@@ -71,16 +91,15 @@ async fn main() -> anyhow::Result<()>
 async fn handle_priv(client: Twitch_Client, msg: PrivmsgMessage)
 {
     //tracing::info!("Received message: {:#?}", msg);
+    let runtypes: String = String::from("!?#~`");
     let mut handler = EventHandler { command_map: HashMap::new() };
     handler.add_command(String::from("test"), commands::test_command);
     handler.add_command(String::from("dreamboumtweet"), commands::dreamboumtweet);
 
-    if msg.message_text.to_lowercase().starts_with("!")
-       || msg.message_text.to_lowercase().starts_with("?")
+    if let Some(runtype) = commands::Runtype::try_from_msg(&msg.message_text)
     {
         let mut name: String = msg.message_text.to_lowercase().clone();
-        name = String::from(&name[1..name.len()]);
-        //println!("{} {}", msg.message_text, name);
+        name = String::from(&name[1..]); // send the name forced lowercase for case insensitivity /*name.len()*/
         tokio::spawn(commands::execute_command(name, client, msg, handler.command_map));
     }
 }

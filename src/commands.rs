@@ -26,6 +26,8 @@ use twitch_irc::
     ClientConfig, SecureTCPTransport, TwitchIRCClient,
 };
 use crate::helpers::readlines_to_vec;
+use crate::db_ops::{insert_dbtweet, query_dbtweet_to_vec, query_single_dbtweet, get_dbt_count};
+
 pub type Twitch_Client = TwitchIRCClient<SecureTCPTransport, StaticLoginCredentials>;
 // uses an unsigned 8bit int to signify what block to execute
 pub type Callback = fn(u8) -> String;// Option<String>;
@@ -43,6 +45,29 @@ impl EventHandler
     }
 }
 
+pub enum Runtype
+{
+    Command,
+    Help,
+    Hash,
+    Tilde,
+}
+
+impl Runtype
+{
+    pub fn try_from_msg(msg: &str) -> Option<Runtype>
+    {
+        let rt = match msg.bytes().next()?
+        {
+            b'!' => Self::Command,
+            b'?' => Self::Help,
+            b'#' => Self::Hash,
+            b'~' => Self::Tilde,
+            _ => return None,
+        };
+        return Some(rt);
+    }
+}
 
 /*
     COMMAND METHODOLOGY
@@ -59,10 +84,10 @@ impl EventHandler
 */
 pub async fn execute_command(name: String, client: Twitch_Client, msg: PrivmsgMessage, cmd_map: HashMap<String, Callback>) -> anyhow::Result<()>
 {
-    let command_index: usize = 0;
-    let runtype: u8 = msg.message_text.as_bytes()[command_index]; // gets a byte literal (Ex. b'!')
-    if cmd_map.contains_key(&name as &str)
+    if cmd_map.contains_key(&name)
     {
+        const COMMAND_INDEX: usize = 0;
+        let runtype: u8 = msg.message_text.as_bytes()[COMMAND_INDEX]; // gets a byte literal (Ex. b'!')
         let out = cmd_map.get(&name as &str).expect("Some shit went wrong!");
         let res = String::from(out(runtype));
         let dt_fmt = chrono::offset::Local::now().format("%H:%M:%S").to_string();
@@ -81,38 +106,59 @@ pub fn test_command(runtype: u8) -> String
     {
         b'!' =>
         {
-            return String::from("Test Command Block")
+            return String::from("Test Command Block");
         },
         b'?' =>
         {
-            return String::from("Test Help Block")
+            return String::from("Test Help Block");
+        },
+        b'#' =>
+        {
+            return String::from("Test Hash Block");
+        },
+        b'~' =>
+        {
+            return String::from("Test Tilde Block");
         },
         _ => {return String::from("");},
     }
 }
 
 // Preliminary implementation of dreamboumtweet (will eventually change)
-// TODO: possibly add parameter usage: u8
+
 pub fn dreamboumtweet(runtype: u8) -> String//Option<String>//(String, String)
 {
+    //const TOTAL_TWEETS: usize = 6569;
     match runtype
     {
         b'!' =>
         {
-            // read in list of tweets
-            let mut dbt_vec = readlines_to_vec("dreamboum_tweets_10_05_2022.txt").expect("Could not load lines");
-            let index = rand::thread_rng().gen_range(0..dbt_vec.len());
-            let splitpoint: usize = 13;
-            let length = dbt_vec[index].len();
-            let tweet_ctx: &str = &dbt_vec[index][0..length-splitpoint];
-            //let date_str: &str = &dbt_vec[index][length-splitpoint..];
-            //return Some(tweet_ctx.to_string());
-            return tweet_ctx.to_string();
+
+            let index: i32 = rand::thread_rng().gen_range(0..get_dbt_count()).try_into().unwrap();
+            let tweet_ctx = query_single_dbtweet(index);
+            return String::from(tweet_ctx);
         },
         b'?' =>
         {
-            //return Some("This command randomly sends a tweet made by twitter user @Dreamboum".to_string());
-            return String::from("This command sends a random tweet made by twitter user @Dreamboum");
+
+            return String::from(format!("This command sends a random tweet made by twitter user @Dreamboum. TOTAL_TWEETS: {}", get_dbt_count()));
+        },
+        b'#' =>
+        {
+            let dbt_vec = readlines_to_vec("assets/dreamboum_tweets_10_05_2022.txt").expect("Could not load lines");
+            let index = rand::thread_rng().gen_range(0..dbt_vec.len());
+            let splitpoint: usize = 13;
+            let length = dbt_vec[index].len();
+            let tweet_ctx: &str = &dbt_vec[index];
+            return String::from(tweet_ctx);
+        },
+        b'~' =>
+        {
+            let dbt_vec: Vec<(String, String)> = query_dbtweet_to_vec();
+            let index = rand::thread_rng().gen_range(0..dbt_vec.len());
+            let tweet_ctx =  &dbt_vec[index].0;
+            //let date_ctx = &dbt_vec[index].1;
+            return String::from(tweet_ctx);
         },
         _ =>
         {

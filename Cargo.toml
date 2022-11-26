@@ -13,6 +13,7 @@ edition = "2021"
 anyhow = "1.0.63"
 chrono = "0.4.23"
 csv = "1.1.6"
+diesel = { version = "2.0.0", features = ["postgres"] }
 dotenv = "0.15.0"
 pest = "2.0"
 pest_derive = "2.0"
