@@ -69,7 +69,7 @@ async fn main() -> anyhow::Result<()>
     }
 
     let config =
-    ClientConfig::new_simple(StaticLoginCredentials::new(bot_username, Some(oauth_token)));
+    ClientConfig::new_simple(StaticLoginCredentials::new(bot_username.clone(), Some(oauth_token)));
     let (mut incoming_messages, client) = Twitch_Client::new(config);
 
     let clone = client.clone();
@@ -81,7 +81,7 @@ async fn main() -> anyhow::Result<()>
             {
                 let dt_fmt = chrono::offset::Local::now().format("%H:%M:%S").to_string();
                 println!("[{}] #{} <{}>: {}", dt_fmt, msg.channel_login, &msg.sender.name, msg.message_text);
-                handle_priv(clone.clone(), msg).await;
+                handle_priv(clone.clone(), bot_username.clone(), msg).await;
             }
         }
     });
@@ -93,11 +93,11 @@ async fn main() -> anyhow::Result<()>
 }
 
 // Handle Commands
-async fn handle_priv(client: Twitch_Client, msg: PrivmsgMessage)
+async fn handle_priv(client: Twitch_Client, bot_username: String, msg: PrivmsgMessage)
 {
     //tracing::info!("Received message: {:#?}", msg);
     let runtypes: String = String::from("!?#~`");
-    let mut handler = EventHandler { command_map: HashMap::new() };
+    let mut handler = EventHandler { bot_username, command_map: HashMap::new() };
     handler.add_command(String::from("test"), commands::test_command);
     handler.add_command(String::from("dreamboumtweet"), commands::dreamboumtweet);
 
@@ -105,6 +105,6 @@ async fn handle_priv(client: Twitch_Client, msg: PrivmsgMessage)
     {
         let mut name: String = msg.message_text.to_lowercase().clone();
         name = String::from(&name[1..]); // send the name forced lowercase for case insensitivity /*name.len()*/
-        tokio::spawn(commands::execute_command(name, client, msg, handler.command_map));
+        handler.execute_command(name, client, msg).await.unwrap();
     }
 }

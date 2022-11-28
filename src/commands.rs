@@ -34,6 +34,7 @@ pub type Callback = fn(u8) -> String;// Option<String>;
 
 pub struct EventHandler
 {
+    pub bot_username: String,
     pub command_map: HashMap<String, Callback>,
 }
 
@@ -42,6 +43,38 @@ impl EventHandler
     pub fn add_command(&mut self, name: String, function: Callback)
     {
         self.command_map.insert(name, function);
+    }
+
+    /*
+        COMMAND METHODOLOGY
+            - Each command can have multiple different ouputs
+            - '!' before a string will attempt to execute the command (USE THIS IF YOU JUST WANT 1 ESC CHAR)
+            - '?' before a string will attempt to help the user use the command
+            - '^' UNDECIDED IDEAS: possible escape for grammar
+            - '~' UNDECIDED
+
+        name will be a Unique ID -> Value {Dataset, Help message}
+
+        DESCRIPTION: This function handles only the processing of the initial message passed and the
+                    function pointer execution and then sends the returned string back to the IRC channel
+    */
+    pub async fn execute_command(&self, name: String, client: Twitch_Client, msg: PrivmsgMessage) -> anyhow::Result<()>
+    {
+        if self.command_map.contains_key(&name)
+        {
+            handle_bac_user_in_db(msg.sender.name); // Updates user database
+            const COMMAND_INDEX: usize = 0;
+            let runtype: u8 = msg.message_text.as_bytes()[COMMAND_INDEX]; // gets a byte literal (Ex. b'!')
+            let out = self.command_map.get(&name).expect("Some shit went wrong!");
+            let res = String::from(out(runtype));
+            let dt_fmt = chrono::offset::Local::now().format("%H:%M:%S").to_string();
+            println!("[{}] #{} <{}>: {}", dt_fmt, msg.channel_login, self.bot_username, res);
+            client.say(
+                    msg.channel_login.clone(),
+            format!("{}", res)
+            ).await?;
+        }
+        Ok(())
     }
 }
 
@@ -70,37 +103,6 @@ impl Runtype
     }
 }
 
-/*
-    COMMAND METHODOLOGY
-        - Each command can have multiple different ouputs
-        - '!' before a string will attempt to execute the command (USE THIS IF YOU JUST WANT 1 ESC CHAR)
-        - '?' before a string will attempt to help the user use the command
-        - '^' UNDECIDED IDEAS: possible escape for grammar
-        - '~' UNDECIDED
-
-    name will be a Unique ID -> Value {Dataset, Help message}
-
-    DESCRIPTION: This function handles only the processing of the initial message passed and the
-                 function pointer execution and then sends the returned string back to the IRC channel
-*/
-pub async fn execute_command(name: String, client: Twitch_Client, msg: PrivmsgMessage, cmd_map: HashMap<String, Callback>) -> anyhow::Result<()>
-{
-    if cmd_map.contains_key(&name)
-    {
-        handle_bac_user_in_db(msg.sender.name); // Updates user database
-        const COMMAND_INDEX: usize = 0;
-        let runtype: u8 = msg.message_text.as_bytes()[COMMAND_INDEX]; // gets a byte literal (Ex. b'!')
-        let out = cmd_map.get(&name).expect("Some shit went wrong!");
-        let res = String::from(out(runtype));
-        let dt_fmt = chrono::offset::Local::now().format("%H:%M:%S").to_string();
-        println!("[{}] #{} <blueayachan>: {}", dt_fmt, msg.channel_login, res);
-        client.say(
-                msg.channel_login.clone(),
-        format!("{}", res)
-        ).await?;
-    }
-    Ok(())
-}
 
 pub fn test_command(runtype: u8) -> String
 {
