@@ -135,8 +135,7 @@ pub fn dreamboumtweet(runtype: u8) -> String//Option<String>//(String, String)
     {
         b'!' =>
         {
-
-            let index: i32 = rand::thread_rng().gen_range(0..get_dbt_count()).try_into().unwrap();
+            let index: i32 = rand::thread_rng().gen_range(1..=get_dbt_count()).try_into().unwrap();
             let tweet_ctx = query_single_dbtweet(index);
             return String::from(tweet_ctx);
         },
@@ -148,7 +147,7 @@ pub fn dreamboumtweet(runtype: u8) -> String//Option<String>//(String, String)
         b'#' =>
         {
             let dbt_vec = readlines_to_vec("assets/dreamboum_tweets_10_05_2022.txt").expect("Could not load lines");
-            let index = rand::thread_rng().gen_range(0..dbt_vec.len());
+            let index = rand::thread_rng().gen_range(1..=dbt_vec.len());
             let splitpoint: usize = 13;
             let length = dbt_vec[index].len();
             let tweet_ctx: &str = &dbt_vec[index];
@@ -157,7 +156,7 @@ pub fn dreamboumtweet(runtype: u8) -> String//Option<String>//(String, String)
         b'~' =>
         {
             let dbt_vec: Vec<(String, String)> = query_dbtweet_to_vec();
-            let index = rand::thread_rng().gen_range(0..dbt_vec.len());
+            let index = rand::thread_rng().gen_range(1..=dbt_vec.len());
             let tweet_ctx =  &dbt_vec[index].0;
             //let date_ctx = &dbt_vec[index].1;
             return String::from(tweet_ctx);
