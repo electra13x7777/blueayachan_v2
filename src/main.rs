@@ -14,7 +14,10 @@ use std::
     time::Duration,
     collections::HashMap,
 };
-use chrono;
+use chrono::
+{
+    NaiveDateTime,
+};
 use twitch_irc::
 {
     login::StaticLoginCredentials,
@@ -36,9 +39,11 @@ pub mod db_connect;
 pub mod models;
 pub mod schema;
 pub mod db_ops;
+//pub mod test_db_stuff;
 #[macro_use]
 extern crate diesel;
-use crate::db_ops::{insert_dbtweet, query_dbtweet_to_vec};
+use crate::db_ops::{insert_dbtweet, query_dbtweet_to_vec, insert_role};
+//use crate::test_db_stuff::test;
 
 //type Client = TwitchIRCClient<SecureTCPTransport, StaticLoginCredentials>;
 

@@ -26,7 +26,7 @@ use twitch_irc::
     ClientConfig, SecureTCPTransport, TwitchIRCClient,
 };
 use crate::helpers::readlines_to_vec;
-use crate::db_ops::{insert_dbtweet, query_dbtweet_to_vec, query_single_dbtweet, get_dbt_count};
+use crate::db_ops::{insert_dbtweet, query_dbtweet_to_vec, query_single_dbtweet, get_dbt_count, handle_bac_user_in_db};
 
 pub type Twitch_Client = TwitchIRCClient<SecureTCPTransport, StaticLoginCredentials>;
 // uses an unsigned 8bit int to signify what block to execute
@@ -45,6 +45,7 @@ impl EventHandler
     }
 }
 
+// AZUCHANG'S BOILERPLATE
 pub enum Runtype
 {
     Command,
@@ -86,9 +87,10 @@ pub async fn execute_command(name: String, client: Twitch_Client, msg: PrivmsgMe
 {
     if cmd_map.contains_key(&name)
     {
+        handle_bac_user_in_db(msg.sender.name); // Updates user database
         const COMMAND_INDEX: usize = 0;
         let runtype: u8 = msg.message_text.as_bytes()[COMMAND_INDEX]; // gets a byte literal (Ex. b'!')
-        let out = cmd_map.get(&name as &str).expect("Some shit went wrong!");
+        let out = cmd_map.get(&name).expect("Some shit went wrong!");
         let res = String::from(out(runtype));
         let dt_fmt = chrono::offset::Local::now().format("%H:%M:%S").to_string();
         println!("[{}] #{} <blueayachan>: {}", dt_fmt, msg.channel_login, res);

@@ -11,9 +11,15 @@
 ```
 ## Blueayachan... But better!
 
-## DONE?
+## Devlog
+### Commands
 * Callback that can interop with every command
 * Dreamboumtweets ported. Follow [@dreamboum](https://twitter.com/Dreamboum) please!
+### DB
+* Dreamboumtweets database
+* Blueayachan User database
+* Roles database
+
 
 ### More to come soon!
 [Blueayachan Version 1](https://github.com/electra13x7777/blueayachan)

@@ -1,11 +1,7 @@
 /assets
-/migrations
 /ops
 /partials
-
 /src/test_db_stuff.rs
-/src/models.rs
-/src/schema.rs
 /target
 /testing
 .env
