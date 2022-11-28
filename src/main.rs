@@ -96,10 +96,10 @@ async fn main() -> anyhow::Result<()>
 async fn handle_priv(client: Twitch_Client, bot_username: String, msg: PrivmsgMessage)
 {
     //tracing::info!("Received message: {:#?}", msg);
-    let runtypes: String = String::from("!?#~`");
     let mut handler = EventHandler { bot_username, command_map: HashMap::new() };
     handler.add_command(String::from("test"), commands::test_command);
     handler.add_command(String::from("dreamboumtweet"), commands::dreamboumtweet);
+    handler.add_command(String::from("me"), commands::me);
 
     if let Some(runtype) = commands::Runtype::try_from_msg(&msg.message_text)
     {

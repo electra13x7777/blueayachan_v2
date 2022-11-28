@@ -139,6 +139,15 @@ pub fn handle_bac_user_in_db(user_nick_str: String)
     }
 }
 
+pub fn query_user_data(user_nick_str: String) -> BACUser
+{
+    use crate::schema::blueayachanuser::dsl::*;
+    let mut connection: PgConnection = establish_connection();
+    let user_nick_lower: String = user_nick_str.to_lowercase();
+    let result = blueayachanuser.filter(user_nick.eq(&user_nick_lower)).first::<BACUser>(&mut connection).expect("Oh no!");
+    return result;
+}
+
 // BACKEND ONLY!! WILL NEVER EXECUTE IN OUR EVENT LOOP
 
 pub fn insert_role(role_str: String)
@@ -155,14 +164,16 @@ pub fn insert_role(role_str: String)
 /*
 pub fn insert_bac_user_role(user_nick_str: String, role_str: String)
 {
+    use crate::schema::blueayachanuser::dsl::*;
+    use crate::schema::roles::dsl::*;
     use crate::schema::blueayachanuser_roles::dsl::*;
     let mut connection: PgConnection = establish_connection();
-    /*
-    let user = users.find(1).first::<User>(&connection).expect("Error loading user");
+
+    let user = blueayachanuser.find(user_nick_str).first::<User>(&mut connection).expect("Error loading user");
     let post_list = Post::belonging_to(&user)
     .load::<Post>(&connection)
     .expect("Error loading posts");
-    */
+
     let nt_now: NaiveDateTime = chrono::offset::Local::now().naive_local();
     let new_userrole = NewBAC_User_Role{role_name: &role_str, date_added: &nt_now};
     diesel::insert_into(roles)

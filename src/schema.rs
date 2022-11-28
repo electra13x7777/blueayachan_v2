@@ -5,16 +5,16 @@ diesel::table! {
         id -> Int4,
         user_nick -> Varchar,
         num_commands -> Int4,
-        date_added -> Nullable<Timestamp>,
+        date_added -> Timestamp,
     }
 }
 
 diesel::table! {
     blueayachanuser_roles (id) {
         id -> Int4,
-        user_id -> Nullable<Int4>,
-        role_id -> Nullable<Int4>,
-        created -> Nullable<Timestamp>,
+        user_id -> Int4,
+        role_id -> Int4,
+        created -> Timestamp,
     }
 }
 
@@ -29,8 +29,8 @@ diesel::table! {
 diesel::table! {
     roles (id) {
         id -> Int4,
-        role_name -> Nullable<Varchar>,
-        date_added -> Nullable<Timestamp>,
+        role_name -> Varchar,
+        date_added -> Timestamp,
     }
 }
 

@@ -26,11 +26,12 @@ use twitch_irc::
     ClientConfig, SecureTCPTransport, TwitchIRCClient,
 };
 use crate::helpers::readlines_to_vec;
-use crate::db_ops::{insert_dbtweet, query_dbtweet_to_vec, query_single_dbtweet, get_dbt_count, handle_bac_user_in_db};
+use crate::db_ops::*;
+use crate::models::*;
 
 pub type Twitch_Client = TwitchIRCClient<SecureTCPTransport, StaticLoginCredentials>;
 // uses an unsigned 8bit int to signify what block to execute
-pub type Callback = fn(u8) -> String;// Option<String>;
+pub type Callback = fn(u8, PrivmsgMessage) -> String;// Option<String>;
 
 pub struct EventHandler
 {
@@ -62,11 +63,11 @@ impl EventHandler
     {
         if self.command_map.contains_key(&name)
         {
-            handle_bac_user_in_db(msg.sender.name); // Updates user database
+            handle_bac_user_in_db(msg.sender.name.clone()); // Updates user database
             const COMMAND_INDEX: usize = 0;
-            let runtype: u8 = msg.message_text.as_bytes()[COMMAND_INDEX]; // gets a byte literal (Ex. b'!')
+            let runtype: u8 = msg.message_text.clone().as_bytes()[COMMAND_INDEX]; // gets a byte literal (Ex. b'!')
             let out = self.command_map.get(&name).expect("Some shit went wrong!");
-            let res = String::from(out(runtype));
+            let res = String::from(out(runtype, msg.clone()));
             let dt_fmt = chrono::offset::Local::now().format("%H:%M:%S").to_string();
             println!("[{}] #{} <{}>: {}", dt_fmt, msg.channel_login, self.bot_username, res);
             client.say(
@@ -103,8 +104,11 @@ impl Runtype
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//                          COMMAND IMPLEMENTATIONS                          //
+///////////////////////////////////////////////////////////////////////////////
 
-pub fn test_command(runtype: u8) -> String
+pub fn test_command(runtype: u8, msg_ctx: PrivmsgMessage) -> String
 {
     match runtype
     {
@@ -130,7 +134,7 @@ pub fn test_command(runtype: u8) -> String
 
 // Preliminary implementation of dreamboumtweet (will eventually change)
 
-pub fn dreamboumtweet(runtype: u8) -> String//Option<String>//(String, String)
+pub fn dreamboumtweet(runtype: u8, msg_ctx: PrivmsgMessage) -> String//Option<String>//(String, String)
 {
     //const TOTAL_TWEETS: usize = 6569;
     match runtype
@@ -149,7 +153,7 @@ pub fn dreamboumtweet(runtype: u8) -> String//Option<String>//(String, String)
         b'#' =>
         {
             let dbt_vec = readlines_to_vec("assets/dreamboum_tweets_10_05_2022.txt").expect("Could not load lines");
-            let index = rand::thread_rng().gen_range(1..=dbt_vec.len());
+            let index = rand::thread_rng().gen_range(0..dbt_vec.len());
             let splitpoint: usize = 13;
             let length = dbt_vec[index].len();
             let tweet_ctx: &str = &dbt_vec[index];
@@ -167,5 +171,30 @@ pub fn dreamboumtweet(runtype: u8) -> String//Option<String>//(String, String)
         {
             return String::from("");
         },
+    }
+}
+
+pub fn me(runtype: u8, msg_ctx: PrivmsgMessage) -> String
+{
+    let user_data: BACUser = query_user_data(msg_ctx.sender.name.to_lowercase());
+    match runtype
+    {
+        b'!' =>
+        {
+            return format!("| Nick: {} | Commands: {} | Date Added: {} |", msg_ctx.sender.name, user_data.num_commands, user_data.date_added);
+        },
+        b'?' =>
+        {
+            return format!("BAC User {} added on {}", msg_ctx.sender.name, user_data.date_added);
+        },
+        b'#' =>
+        {
+            return format!("{} has used commands {} times!", msg_ctx.sender.name, user_data.num_commands);
+        },
+        b'~' =>
+        {
+            return String::from("Test Tilde Block");
+        },
+        _ => {return String::from("");},
     }
 }
