@@ -23,3 +23,22 @@ pub fn readlines_to_vec(filename: impl AsRef<Path>) -> io::Result<Vec<String>>
 {
     BufReader::new(File::open(filename)?).lines().collect()
 }
+
+// reads a csv EX.) key,value\n
+pub fn readlines_to_map(filename: impl AsRef<Path>) -> io::Result<HashMap<String, String>>
+{
+    let mut res: HashMap<String, String> = HashMap::new();
+    let br = BufReader::new(File::open(filename)?);
+    for line in br.lines()
+    {
+        if let Some((key, val)) = line.expect("Cannot Read Line").split_once(",")
+        {
+            res.insert(key.to_string(), val.to_string());
+        }
+        else
+        {
+            panic!()
+        };
+    }
+    return Ok(res);
+}

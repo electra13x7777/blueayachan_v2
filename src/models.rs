@@ -4,30 +4,10 @@ use crate::schema::
     blueayachanuser,
     blueayachanuser_roles,
     dreamboumtweets,
-    roles
+    roles,
+    nocturnedemons
 };
 use chrono::NaiveDateTime;
-
-///////////////////////////////////////////////////////////////////////////////
-//                              DREAMBOUMTWEETS                              //
-///////////////////////////////////////////////////////////////////////////////
-
-#[derive(Insertable)]
-#[diesel(table_name = dreamboumtweets)]
-pub struct New_DBTweet<'a>
-{
-    pub tweet: &'a str,
-    pub tweet_date: &'a str,
-}
-
-#[derive(Queryable, Selectable)]
-#[diesel(table_name = dreamboumtweets)]
-pub struct DBTweet
-{
-    pub id: i32,
-    pub tweet: String,
-    pub tweet_date: String,
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 //                           USER, ROLES, USERROLES                          //
@@ -100,4 +80,46 @@ pub struct BAC_User_Role
     pub user_id: i32,
     pub role_id: i32,
     pub created: NaiveDateTime,
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//                              DREAMBOUMTWEETS                              //
+///////////////////////////////////////////////////////////////////////////////
+
+#[derive(Insertable)]
+#[diesel(table_name = dreamboumtweets)]
+pub struct New_DBTweet<'a>
+{
+    pub tweet: &'a str,
+    pub tweet_date: &'a str,
+}
+
+#[derive(Queryable, Selectable)]
+#[diesel(table_name = dreamboumtweets)]
+pub struct DBTweet
+{
+    pub id: i32,
+    pub tweet: String,
+    pub tweet_date: String,
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//                           GACHA COMMANDS RELATED                          //
+///////////////////////////////////////////////////////////////////////////////
+
+#[derive(Insertable)]
+#[diesel(table_name = nocturnedemons)]
+pub struct New_NDemon<'a>
+{
+    pub demon_name: &'a str,
+    pub demon_img_link: &'a str,
+}
+
+#[derive(Queryable, Selectable)]
+#[diesel(table_name = nocturnedemons)]
+pub struct NDemon
+{
+    pub id: i32,
+    pub demon_name: String,
+    pub demon_img_link: String,
 }

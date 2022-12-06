@@ -61,6 +61,7 @@ impl EventHandler
     */
     pub async fn execute_command(&self, name: String, client: Twitch_Client, msg: PrivmsgMessage) -> anyhow::Result<()>
     {
+        print!("{}\n", name);
         if self.command_map.contains_key(&name)
         {
             handle_bac_user_in_db(msg.sender.name.clone()); // Updates user database
@@ -132,6 +133,28 @@ pub fn test_command(runtype: u8, msg_ctx: PrivmsgMessage) -> String
     }
 }
 
+// TODO: Stop being an idiot, learn how to parse well in this damn language
+pub fn test_args(runtype: u8, msg_ctx: PrivmsgMessage) -> String
+{
+    print!("Executing\n");
+    let text = msg_ctx.message_text.as_str(); // get str from msg context
+    let (name, args_start) = match text.split_once(' ')
+    {
+        Some((name, args_start)) => (name, args_start),
+        None => (text, ""),
+    };
+    //let args = text[args_start..];
+    println!("{}", args_start);
+    match runtype
+    {
+        b'!' =>
+        {
+            return format!("{} is a bitch", String::from(args_start));
+        },
+        _ => {return String::from("Uh oh");},
+    }
+}
+
 // Preliminary implementation of dreamboumtweet (will eventually change)
 
 pub fn dreamboumtweet(runtype: u8, msg_ctx: PrivmsgMessage) -> String//Option<String>//(String, String)
@@ -141,8 +164,8 @@ pub fn dreamboumtweet(runtype: u8, msg_ctx: PrivmsgMessage) -> String//Option<St
     {
         b'!' =>
         {
-            let index: i32 = rand::thread_rng().gen_range(1..=get_dbt_count()).try_into().unwrap();
-            let tweet_ctx = query_single_dbtweet(index);
+            let id: i32 = rand::thread_rng().gen_range(1..=get_dbt_count()).try_into().unwrap();
+            let tweet_ctx = query_single_dbtweet(id);
             return String::from(tweet_ctx);
         },
         b'?' =>
@@ -166,6 +189,53 @@ pub fn dreamboumtweet(runtype: u8, msg_ctx: PrivmsgMessage) -> String//Option<St
             let tweet_ctx =  &dbt_vec[index].0;
             //let date_ctx = &dbt_vec[index].1;
             return String::from(tweet_ctx);
+        },
+        _ =>
+        {
+            return String::from("");
+        },
+    }
+}
+
+pub fn demongacha(runtype: u8, msg_ctx: PrivmsgMessage) -> String//Option<String>//(String, String)
+{
+    //const TOTAL_TWEETS: usize = 6569;
+    match runtype
+    {
+        b'!' =>
+        {
+            // query random demon
+            let id: i32 = rand::thread_rng().gen_range(1..=get_demon_count()).try_into().unwrap();
+            let demon: NDemon = query_single_demon(id);
+            // get rarity
+            let rarity_weight: i8 = rand::thread_rng().gen_range(0..=100);
+            let rarity =
+            if rarity_weight>=95
+            {
+                5
+            }
+            else if rarity_weight >= 80 && rarity_weight < 95
+            {
+                4
+            }
+            else if rarity_weight >= 60 && rarity_weight < 80
+            {
+                3
+            }
+            else if rarity_weight >= 35 && rarity_weight < 60
+            {
+                2
+            }
+            else
+            {
+                1
+            };
+            return String::from(format!("{} summoned a {}⭐ {} {}", msg_ctx.sender.name, rarity, demon.demon_name, demon.demon_img_link));
+        },
+        b'?' =>
+        {
+
+            return String::from(format!("This command summons a random demon from Shin Megami Tensei III: Nocturne. TOTAL_DEMONS: {}", get_demon_count()));
         },
         _ =>
         {

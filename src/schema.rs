@@ -27,6 +27,14 @@ diesel::table! {
 }
 
 diesel::table! {
+    nocturnedemons (id) {
+        id -> Int4,
+        demon_name -> Varchar,
+        demon_img_link -> Varchar,
+    }
+}
+
+diesel::table! {
     roles (id) {
         id -> Int4,
         role_name -> Varchar,
@@ -41,5 +49,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     blueayachanuser,
     blueayachanuser_roles,
     dreamboumtweets,
+    nocturnedemons,
     roles,
 );

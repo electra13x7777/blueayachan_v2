@@ -1,6 +1,7 @@
 /assets
 /ops
 /partials
+/src/command.rs
 /src/test_db_stuff.rs
 /target
 /testing

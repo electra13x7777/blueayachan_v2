@@ -35,6 +35,7 @@ use crate::commands::
 
 pub mod helpers;
 use crate::helpers::readlines_to_vec;
+use crate::helpers::readlines_to_map;
 pub mod db_connect;
 pub mod models;
 pub mod schema;
@@ -42,8 +43,9 @@ pub mod db_ops;
 //pub mod test_db_stuff;
 #[macro_use]
 extern crate diesel;
-use crate::db_ops::{insert_dbtweet, query_dbtweet_to_vec, insert_role};
+use crate::db_ops::*;
 //use crate::test_db_stuff::test;
+
 
 //type Client = TwitchIRCClient<SecureTCPTransport, StaticLoginCredentials>;
 
@@ -99,12 +101,21 @@ async fn handle_priv(client: Twitch_Client, bot_username: String, msg: PrivmsgMe
     let mut handler = EventHandler { bot_username, command_map: HashMap::new() };
     handler.add_command(String::from("test"), commands::test_command);
     handler.add_command(String::from("dreamboumtweet"), commands::dreamboumtweet);
+    handler.add_command(String::from("demongacha"), commands::demongacha);
     handler.add_command(String::from("me"), commands::me);
+    handler.add_command(String::from("args"), commands::test_args);
 
     if let Some(runtype) = commands::Runtype::try_from_msg(&msg.message_text)
     {
-        let mut name: String = msg.message_text.to_lowercase().clone();
-        name = String::from(&name[1..]); // send the name forced lowercase for case insensitivity /*name.len()*/
-        handler.execute_command(name, client, msg).await.unwrap();
+        let mut proc_msg: String = msg.message_text.to_lowercase().clone();
+        proc_msg = String::from(&proc_msg[1..]); // send the name forced lowercase for case insensitivity /*name.len()*/
+        let text = proc_msg.as_str();
+        let (name_str, args_start) = match text.split_once(' ')
+        {
+            Some((name_str, args_start)) => (name_str, args_start),
+            None => (text, ""),
+        };
+        // TODO: parameterize ARGS
+        handler.execute_command(String::from(name_str), client, msg).await.unwrap();
     }
 }
