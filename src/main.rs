@@ -102,6 +102,7 @@ async fn handle_priv(client: Twitch_Client, bot_username: String, msg: PrivmsgMe
     handler.add_command(String::from("test"), commands::test_command);
     handler.add_command(String::from("dreamboumtweet"), commands::dreamboumtweet);
     handler.add_command(String::from("demongacha"), commands::demongacha);
+    handler.add_command(String::from("hornedanimegacha"), commands::hornedanimegacha);
     handler.add_command(String::from("me"), commands::me);
     handler.add_command(String::from("args"), commands::test_args);
 

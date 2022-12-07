@@ -1,6 +1,20 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
+    akbs (id) {
+        id -> Int4,
+        name -> Varchar,
+    }
+}
+
+diesel::table! {
+    bbcfs (id) {
+        id -> Int4,
+        name -> Varchar,
+    }
+}
+
+diesel::table! {
     blueayachanuser (id) {
         id -> Int4,
         user_nick -> Varchar,
@@ -27,6 +41,41 @@ diesel::table! {
 }
 
 diesel::table! {
+    ggxxacplusrs (id) {
+        id -> Int4,
+        name -> Varchar,
+    }
+}
+
+diesel::table! {
+    hornedanimes (id) {
+        id -> Int4,
+        name -> Varchar,
+    }
+}
+
+diesel::table! {
+    luminas (id) {
+        id -> Int4,
+        name -> Varchar,
+    }
+}
+
+diesel::table! {
+    melees (id) {
+        id -> Int4,
+        name -> Varchar,
+    }
+}
+
+diesel::table! {
+    meltys (id) {
+        id -> Int4,
+        name -> Varchar,
+    }
+}
+
+diesel::table! {
     nocturnedemons (id) {
         id -> Int4,
         demon_name -> Varchar,
@@ -42,13 +91,36 @@ diesel::table! {
     }
 }
 
+diesel::table! {
+    sokus (id) {
+        id -> Int4,
+        name -> Varchar,
+    }
+}
+
+diesel::table! {
+    vsavs (id) {
+        id -> Int4,
+        name -> Varchar,
+    }
+}
+
 diesel::joinable!(blueayachanuser_roles -> blueayachanuser (user_id));
 diesel::joinable!(blueayachanuser_roles -> roles (role_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
+    akbs,
+    bbcfs,
     blueayachanuser,
     blueayachanuser_roles,
     dreamboumtweets,
+    ggxxacplusrs,
+    hornedanimes,
+    luminas,
+    melees,
+    meltys,
     nocturnedemons,
     roles,
+    sokus,
+    vsavs,
 );

@@ -15,11 +15,15 @@
 ### Commands
 * Callback that can interop with every command
 * Dreamboumtweets ported. Follow [@dreamboum](https://twitter.com/Dreamboum) please!
+* Demongacha ported
+* HornedAnimeGacha is back!
 ### DB
-* Dreamboumtweets database
-* Blueayachan User database
-* Roles database
-
+* Blueayachan User table
+* Roles table
+* Dreamboumtweets table
+* Demons table
+* pretty much most of the DBs are up at this point but there are a few substantial ones to work on still...
 
 ### More to come soon!
 [Blueayachan Version 1](https://github.com/electra13x7777/blueayachan)
+#### Date Last Updated: 12/07/2022

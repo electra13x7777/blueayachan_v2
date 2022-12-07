@@ -196,8 +196,19 @@ pub fn dreamboumtweet(runtype: u8, msg_ctx: PrivmsgMessage) -> String//Option<St
         },
     }
 }
+/*
+macro_rules! generate_gacha_command {
+    ($fn_name:ident,
+    $runtype:u8,
+    $new_struct_t:ident,
+    $struct_t:ident
+    $db_name:ident,) => {
+        pub fn
+    };
+}*/
 
-pub fn demongacha(runtype: u8, msg_ctx: PrivmsgMessage) -> String//Option<String>//(String, String)
+// DEMONGACHA
+pub fn demongacha(runtype: u8, msg_ctx: PrivmsgMessage) -> String
 {
     //const TOTAL_TWEETS: usize = 6569;
     match runtype
@@ -206,7 +217,7 @@ pub fn demongacha(runtype: u8, msg_ctx: PrivmsgMessage) -> String//Option<String
         {
             // query random demon
             let id: i32 = rand::thread_rng().gen_range(1..=get_demon_count()).try_into().unwrap();
-            let demon: NDemon = query_single_demon(id);
+            let demon: NDemon = query_demon(id);
             // get rarity
             let rarity_weight: i8 = rand::thread_rng().gen_range(0..=100);
             let rarity =
@@ -214,15 +225,15 @@ pub fn demongacha(runtype: u8, msg_ctx: PrivmsgMessage) -> String//Option<String
             {
                 5
             }
-            else if rarity_weight >= 80 && rarity_weight < 95
+            else if rarity_weight >= 80 //&& rarity_weight < 95
             {
                 4
             }
-            else if rarity_weight >= 60 && rarity_weight < 80
+            else if rarity_weight >= 60 //&& rarity_weight < 80
             {
                 3
             }
-            else if rarity_weight >= 35 && rarity_weight < 60
+            else if rarity_weight >= 35 //&& rarity_weight < 60
             {
                 2
             }
@@ -236,6 +247,53 @@ pub fn demongacha(runtype: u8, msg_ctx: PrivmsgMessage) -> String//Option<String
         {
 
             return String::from(format!("This command summons a random demon from Shin Megami Tensei III: Nocturne. TOTAL_DEMONS: {}", get_demon_count()));
+        },
+        _ =>
+        {
+            return String::from("");
+        },
+    }
+}
+
+pub fn hornedanimegacha(runtype: u8, msg_ctx: PrivmsgMessage) -> String
+{
+    //const TOTAL_TWEETS: usize = 6569;
+    match runtype
+    {
+        b'!' =>
+        {
+            // query random demon
+            let id: i32 = rand::thread_rng().gen_range(1..=get_hornedanime_count()).try_into().unwrap();
+            let ha: String = query_hornedanime(id);
+            // get rarity
+            let rarity_weight: i8 = rand::thread_rng().gen_range(0..=100);
+            let rarity =
+            if rarity_weight>=95
+            {
+                5
+            }
+            else if rarity_weight >= 80 //&& rarity_weight < 95
+            {
+                4
+            }
+            else if rarity_weight >= 60 //&& rarity_weight < 80
+            {
+                3
+            }
+            else if rarity_weight >= 35 //&& rarity_weight < 60
+            {
+                2
+            }
+            else
+            {
+                1
+            };
+            return String::from(format!("{} rolled a {}⭐ {}", msg_ctx.sender.name, rarity, ha));
+        },
+        b'?' =>
+        {
+
+            return String::from(format!("This command rolls for a random HornedAnime. TOTAL_HORNEDANIMES: {}", get_hornedanime_count()));
         },
         _ =>
         {
