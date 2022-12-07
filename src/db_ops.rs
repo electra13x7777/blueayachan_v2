@@ -174,13 +174,7 @@ let result = dreamboumtweets.find(q_id).first::<DBTweet>(&mut connection).unwrap
 return result.tweet;
 }*/
 
-pub fn get_dbt_count() -> i64
-{
-    use crate::schema::dreamboumtweets::dsl::*;
-    let mut connection: PgConnection = establish_connection();
-    let count: i64 = dreamboumtweets.count().get_result(&mut connection).unwrap();
-    return count;
-}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //                           GACHA COMMANDS RELATED                          //
@@ -210,14 +204,7 @@ pub fn query_demon(q_id: i32) -> NDemon
     return result;
 }
 
-pub fn get_demon_count() -> i64
-{
-    use crate::schema::nocturnedemons::dsl::*;
-    let mut connection: PgConnection = establish_connection();
-    let count: i64 = nocturnedemons.count().get_result(&mut connection).unwrap();
-    return count;
-}
-
+// INSERT SIMPLE STRING TO DATABASE
 macro_rules! insert_val_to_db
 {
     ($db_name:ident, $struct_t:ident, $fn_name:ident) =>
@@ -245,12 +232,12 @@ insert_val_to_db!(ggxxacplusrs, New_GGXXACPLUSR, insert_ggxxacplusr);
 insert_val_to_db!(akbs, New_AKB, insert_akb);
 insert_val_to_db!(vsavs, New_Vsav, insert_vsav);
 
-/*
+// QUERY SIMPLE STRING FROM DATABASE
 macro_rules! query_string_simple
 {
     ($db_name:ident, $struct_t:ident, $fn_name:ident) =>
     {
-        pub fn $fn_name(q_id: &str)
+        pub fn $fn_name(q_id: i32) -> String
         {
             use crate::schema::$db_name::dsl::*;
             let mut connection: PgConnection = establish_connection();
@@ -260,48 +247,31 @@ macro_rules! query_string_simple
     };
 }
 query_string_simple!(hornedanimes, HornedAnime, query_hornedanime);
-*/
-
-
-pub fn query_hornedanime(q_id: i32) -> String
-{
-    // do a check here first
-    //assert!(q_id <= 184);
-    use crate::schema::hornedanimes::dsl::*;
-    let mut connection: PgConnection = establish_connection();
-    let result = hornedanimes.find(q_id).first::<HornedAnime>(&mut connection).unwrap();
-    return result.name;
-}
-
-pub fn get_hornedanime_count() -> i64
-{
-    use crate::schema::hornedanimes::dsl::*;
-    let mut connection: PgConnection = establish_connection();
-    let count: i64 = hornedanimes.count().get_result(&mut connection).unwrap();
-    return count;
-}
-
-// MELTY BLOOD //
 /*
-pub fn insert_melty(name: String)
-{
-    use crate::schema::meltys::dsl::*;
-    let mut connection: PgConnection = establish_connection();
-    let new_demon = New_Hornedanime{name: &name[..]};
-    // insert
-    diesel::insert_into(meltys)
-    .values(&new_demon)
-    .execute(&mut connection)
-    .expect("Error inserting HornedAnime");
-}
-
-pub fn query_hornedanime(q_id: i32) -> String
-{
-    // do a check here first
-    //assert!(q_id <= 184);
-    use crate::schema::meltys::dsl::*;
-    let mut connection: PgConnection = establish_connection();
-    let result = meltys.find(q_id).first::<Melty>(&mut connection).unwrap();
-    return result.name;
-}
+query_string_simple!(meltys, New_Melty, query_melty);
+query_string_simple!(luminas, New_Lumina, query_lumina);
+query_string_simple!(melees, New_Melee, query_melee);
+query_string_simple!(sokus, New_Soku, query_soku);
+query_string_simple!(bbcfs, New_BBCF, query_bbcf);
+query_string_simple!(ggxxacplusrs, New_GGXXACPLUSR, query_ggxxacplusr);
+query_string_simple!(akbs, New_AKB, query_akb);
+query_string_simple!(vsavs, New_Vsav, query_vsav);
 */
+
+// GET TOTAL ITEMS IN TABLE
+macro_rules! query_count_simple
+{
+    ($db_name:ident, $fn_name:ident) =>
+    {
+        pub fn $fn_name() -> i64
+        {
+            use crate::schema::$db_name::dsl::*;
+            let mut connection: PgConnection = establish_connection();
+            let result = $db_name.count().get_result(&mut connection).unwrap();
+            return result;
+        }
+    };
+}
+query_count_simple!(dreamboumtweets, get_dbt_count);
+query_count_simple!(nocturnedemons, get_demon_count);
+query_count_simple!(hornedanimes, get_hornedanime_count);

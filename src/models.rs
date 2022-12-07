@@ -117,6 +117,7 @@ pub struct NDemon
     pub demon_img_link: String,
 }
 
+// GENERATE DB ENDPOINTS
 macro_rules! generate_simple_db_structs
 {
     ($db_name:ident,
