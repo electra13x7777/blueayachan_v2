@@ -8,6 +8,17 @@ diesel::table! {
 }
 
 diesel::table! {
+    bac_user_demons (id) {
+        id -> Int4,
+        user_id -> Int4,
+        saved_demon_id -> Int4,
+        saved_demon_rarity -> Int4,
+        last_demon_id -> Int4,
+        last_demon_rarity -> Int4,
+    }
+}
+
+diesel::table! {
     bbcfs (id) {
         id -> Int4,
         name -> Varchar,
@@ -105,11 +116,13 @@ diesel::table! {
     }
 }
 
+diesel::joinable!(bac_user_demons -> blueayachanuser (user_id));
 diesel::joinable!(blueayachanuser_roles -> blueayachanuser (user_id));
 diesel::joinable!(blueayachanuser_roles -> roles (role_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     akbs,
+    bac_user_demons,
     bbcfs,
     blueayachanuser,
     blueayachanuser_roles,

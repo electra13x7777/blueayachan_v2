@@ -117,6 +117,36 @@ pub struct NDemon
     pub demon_img_link: String,
 }
 
+#[derive(Insertable)]
+#[diesel(belongs_to(blueayachanuser, foreign_key = user_id))]
+#[diesel(table_name = bac_user_demons)]
+pub struct New_SavedNDemon<'a>
+{
+    pub user_id: &'a i32, // BACUser
+    //pub saved_demon_name: &'a str, // only updates when saved
+    pub saved_demon_id: &'a i32,
+    pub saved_demon_rarity: &'a i32,
+    //pub last_demon_name: &'a str, // updated every time
+    pub last_demon_id: &'a i32,
+    pub last_demon_rarity: &'a i32,
+}
+
+#[derive(Queryable, Selectable)]
+#[diesel(table_name = bac_user_demons)]
+pub struct SavedNDemon
+{
+    pub id: i32,
+    pub user_id: i32,
+    //pub saved_demon_name: String,
+    pub saved_demon_id: i32,
+    pub saved_demon_rarity: i32,
+    //pub last_demon_name: String,
+    pub last_demon_id: i32,
+    pub last_demon_rarity: i32,
+}
+
+
+
 // GENERATE DB ENDPOINTS
 macro_rules! generate_simple_db_structs
 {

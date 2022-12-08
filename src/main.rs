@@ -46,9 +46,6 @@ extern crate diesel;
 use crate::db_ops::*;
 //use crate::test_db_stuff::test;
 
-
-//type Client = TwitchIRCClient<SecureTCPTransport, StaticLoginCredentials>;
-
 #[tokio::main]
 async fn main() -> anyhow::Result<()>
 {
@@ -102,6 +99,7 @@ async fn handle_priv(client: Twitch_Client, bot_username: String, msg: PrivmsgMe
     handler.add_command(String::from("test"), commands::test_command);
     handler.add_command(String::from("dreamboumtweet"), commands::dreamboumtweet);
     handler.add_command(String::from("demongacha"), commands::demongacha);
+    handler.add_command(String::from("savedemon"), commands::savedemon);
     handler.add_command(String::from("hornedanimegacha"), commands::hornedanimegacha);
     handler.add_command(String::from("me"), commands::me);
     handler.add_command(String::from("args"), commands::test_args);

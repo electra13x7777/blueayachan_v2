@@ -1,0 +1,1 @@
+DROP TABLE BAC_user_demons;

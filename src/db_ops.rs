@@ -204,6 +204,91 @@ pub fn query_demon(q_id: i32) -> NDemon
     return result;
 }
 
+pub fn handle_user_last_demon(bacuser: BACUser, demon: &NDemon, rarity: &i32)
+{
+    // USER WILL ALWAYS BE IN BACUSER
+    // PARAMETERS MUST NEVER BE STALE
+    use crate::schema::bac_user_demons::dsl::*;
+    let mut connection: PgConnection = establish_connection();
+    let user_exists: bool = select(exists(bac_user_demons.filter(user_id.eq(&bacuser.id))))
+    .get_result(&mut connection).unwrap();
+    if !user_exists
+    {
+        // set user demon defaults
+        let sd_id = 62;
+        let sd_r = 1;
+        let ld_id = &demon.id;
+        let ld_r = rarity;
+
+        let new_bac_user_demon = New_SavedNDemon
+        {
+            user_id: &bacuser.id, saved_demon_id: &sd_id, saved_demon_rarity: &sd_r,
+            last_demon_id: &ld_id, last_demon_rarity: &ld_r
+        };
+        // insert
+        diesel::insert_into(bac_user_demons)
+        .values(&new_bac_user_demon)
+        .execute(&mut connection)
+        .expect("Error inserting new user");
+    }
+    else
+    {
+        // When user exists only update the last demon fields
+        diesel::update(bac_user_demons.filter(user_id.eq(&bacuser.id)))
+        .set(last_demon_id.eq(&demon.id))
+        .execute(&mut connection).expect("Error updating last demon ID");
+        diesel::update(bac_user_demons.filter(user_id.eq(&bacuser.id)))
+        .set(last_demon_rarity.eq(rarity))
+        .execute(&mut connection).expect("Error updating last demon RARITY");
+    }
+}
+
+//helper
+pub fn query_user_demon(bacuser: &BACUser) -> Option<SavedNDemon>
+{
+    use crate::schema::bac_user_demons::dsl::*;
+    let mut connection: PgConnection = establish_connection();
+    let user_exists: bool = select(exists(bac_user_demons.filter(user_id.eq(&bacuser.id))))
+    .get_result(&mut connection).unwrap();
+    //println!("UID: {}", &user_exists);
+    if !user_exists
+    {
+        // WE WILL DO NOTHING
+        
+        return None;
+    }
+    else
+    {
+        let result = bac_user_demons.filter(user_id.eq(&bacuser.id)).first::<SavedNDemon>(&mut connection).expect("Error finding user");
+        return Some(result);
+    }
+}
+
+pub fn save_user_demon(bacuser: BACUser)
+{
+    use crate::schema::bac_user_demons::dsl::*;
+    let mut connection: PgConnection = establish_connection();
+    let user_exists: bool = select(exists(bac_user_demons.filter(user_id.eq(&bacuser.id))))
+    .get_result(&mut connection).unwrap();
+    if !user_exists
+    {
+        // WE WILL DO NOTHING
+        return;
+    }
+    else
+    {
+        // When user exists only update the last demon fields
+        let sud: SavedNDemon = query_user_demon(&bacuser).expect("Error Querying User Demon Data");
+
+        diesel::update(bac_user_demons.filter(user_id.eq(&bacuser.id)))
+                .set(saved_demon_id.eq(&sud.last_demon_id))
+        .execute(&mut connection).expect("Error updating saved demon ID");
+                diesel::update(bac_user_demons.filter(user_id.eq(&bacuser.id)))
+                .set(saved_demon_rarity.eq(&sud.last_demon_rarity))
+                .execute(&mut connection).expect("Error updating saved demon RARITY");
+    }
+}
+
 // INSERT SIMPLE STRING TO DATABASE
 macro_rules! insert_val_to_db
 {

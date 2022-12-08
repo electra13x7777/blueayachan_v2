@@ -61,7 +61,7 @@ impl EventHandler
     */
     pub async fn execute_command(&self, name: String, client: Twitch_Client, msg: PrivmsgMessage) -> anyhow::Result<()>
     {
-        print!("{}\n", name);
+        //print!("{}\n", name);
         if self.command_map.contains_key(&name)
         {
             handle_bac_user_in_db(msg.sender.name.clone()); // Updates user database
@@ -149,7 +149,7 @@ pub fn test_args(runtype: u8, msg_ctx: PrivmsgMessage) -> String
     {
         b'!' =>
         {
-            return format!("{} is a bitch", String::from(args_start));
+            return format!("{}", String::from(args_start));
         },
         _ => {return String::from("Uh oh");},
     }
@@ -225,15 +225,15 @@ pub fn demongacha(runtype: u8, msg_ctx: PrivmsgMessage) -> String
             {
                 5
             }
-            else if rarity_weight >= 80 //&& rarity_weight < 95
+            else if rarity_weight >= 80
             {
                 4
             }
-            else if rarity_weight >= 60 //&& rarity_weight < 80
+            else if rarity_weight >= 60
             {
                 3
             }
-            else if rarity_weight >= 35 //&& rarity_weight < 60
+            else if rarity_weight >= 35
             {
                 2
             }
@@ -241,12 +241,35 @@ pub fn demongacha(runtype: u8, msg_ctx: PrivmsgMessage) -> String
             {
                 1
             };
-            return String::from(format!("{} summoned a {}⭐ {} {}", msg_ctx.sender.name, rarity, demon.demon_name, demon.demon_img_link));
+
+            // HANDLE AUX DB STUFF
+            // TODO: CHANGE THIS TO QUERY BY ID
+            let bacuser: BACUser = query_user_data(msg_ctx.sender.name.to_lowercase());
+            handle_user_last_demon(bacuser, &demon, &rarity);
+            return String::from(format!("{} summoned a {}⭐ {}! {}", msg_ctx.sender.name, rarity, demon.demon_name, demon.demon_img_link));
         },
         b'?' =>
         {
 
-            return String::from(format!("This command summons a random demon from Shin Megami Tensei III: Nocturne. TOTAL_DEMONS: {}", get_demon_count()));
+            return String::from(format!("This command summons a random demon from Shin Megami Tensei III: Nocturne. Use <!savedemon> to save your last demon. Use <#demongacha> to see your saved demon. TOTAL_DEMONS: {}", get_demon_count()));
+        },
+        b'#' =>
+        {
+            // TODO: need to check for no table entry
+            let bacuser: BACUser = query_user_data(msg_ctx.sender.name.to_lowercase());
+            let sud = match query_user_demon(&bacuser)
+            {
+                // HANDLE SOME (GOOD DATA)
+                Some(sud) => sud,
+                // HANDLE NONE (NO DATA)
+                None =>
+                {
+                    return format!("NO SAVED DEMON FOUND!!! {} please run <!demongacha> and <!savedemon> first!!!", msg_ctx.sender.name);
+                },
+            };
+            let demon: NDemon = query_demon(sud.saved_demon_id);
+            return format!("{} has a {}⭐ {}! {}", bacuser.user_nick, sud.saved_demon_rarity, demon.demon_name, demon.demon_img_link);
+
         },
         _ =>
         {
@@ -254,6 +277,30 @@ pub fn demongacha(runtype: u8, msg_ctx: PrivmsgMessage) -> String
         },
     }
 }
+
+pub fn savedemon(runtype: u8, msg_ctx: PrivmsgMessage) -> String
+{
+    //const TOTAL_TWEETS: usize = 6569;
+    match runtype
+    {
+        b'!' =>
+        {
+            let bacuser: BACUser = query_user_data(msg_ctx.sender.name.to_lowercase());
+            save_user_demon(bacuser);
+            return String::from(format!("{} saved their last demon", msg_ctx.sender.name));
+        },
+        b'?' =>
+        {
+
+            return String::from("This command saves the last demon you summoned with !demongacha.");
+        },
+        _ =>
+        {
+            return String::from("");
+        },
+    }
+}
+
 
 pub fn hornedanimegacha(runtype: u8, msg_ctx: PrivmsgMessage) -> String
 {
@@ -288,7 +335,7 @@ pub fn hornedanimegacha(runtype: u8, msg_ctx: PrivmsgMessage) -> String
             {
                 1
             };
-            return String::from(format!("{} rolled a {}⭐ {}", msg_ctx.sender.name, rarity, ha));
+            return String::from(format!("{} rolled a {}⭐ {}!", msg_ctx.sender.name, rarity, ha));
         },
         b'?' =>
         {
@@ -317,7 +364,14 @@ pub fn me(runtype: u8, msg_ctx: PrivmsgMessage) -> String
         },
         b'#' =>
         {
-            return format!("{} has used commands {} times!", msg_ctx.sender.name, user_data.num_commands);
+            if user_data.num_commands == 1
+            {
+                return format!("{} has used {} command!", msg_ctx.sender.name, user_data.num_commands);
+            }
+            else
+            {
+                return format!("{} has used commands {} times!", msg_ctx.sender.name, user_data.num_commands);
+            }
         },
         b'~' =>
         {

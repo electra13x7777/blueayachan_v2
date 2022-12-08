@@ -15,7 +15,7 @@
 ### Commands
 * Callback that can interop with every command
 * Dreamboumtweets ported. Follow [@dreamboum](https://twitter.com/Dreamboum) please!
-* Demongacha ported
+* Demongacha ported (You can now save your previous demon with !savedemon and view it with #demongacha)
 * HornedAnimeGacha is back!
 ### DB
 * Blueayachan User table
