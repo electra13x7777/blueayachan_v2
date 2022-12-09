@@ -332,16 +332,15 @@ macro_rules! query_string_simple
     };
 }
 query_string_simple!(hornedanimes, HornedAnime, query_hornedanime);
-/*
-query_string_simple!(meltys, New_Melty, query_melty);
-query_string_simple!(luminas, New_Lumina, query_lumina);
-query_string_simple!(melees, New_Melee, query_melee);
-query_string_simple!(sokus, New_Soku, query_soku);
-query_string_simple!(bbcfs, New_BBCF, query_bbcf);
-query_string_simple!(ggxxacplusrs, New_GGXXACPLUSR, query_ggxxacplusr);
-query_string_simple!(akbs, New_AKB, query_akb);
-query_string_simple!(vsavs, New_Vsav, query_vsav);
-*/
+query_string_simple!(meltys, Melty, query_melty);
+query_string_simple!(luminas, Lumina, query_lumina);
+query_string_simple!(melees, Melee, query_melee);
+query_string_simple!(sokus, Soku, query_soku);
+query_string_simple!(bbcfs, BBCF, query_bbcf);
+query_string_simple!(ggxxacplusrs, GGXXACPLUSR, query_ggxxacplusr);
+query_string_simple!(akbs, AKB, query_akb);
+query_string_simple!(vsavs, Vsav, query_vsav);
+
 
 // GET TOTAL ITEMS IN TABLE
 macro_rules! query_count_simple
@@ -360,3 +359,11 @@ macro_rules! query_count_simple
 query_count_simple!(dreamboumtweets, get_dbt_count);
 query_count_simple!(nocturnedemons, get_demon_count);
 query_count_simple!(hornedanimes, get_hornedanime_count);
+query_count_simple!(meltys, get_melty_count);
+query_count_simple!(luminas, get_lumina_count);
+query_count_simple!(melees, get_melee_count);
+query_count_simple!(sokus, get_soku_count);
+query_count_simple!(bbcfs, get_bbcf_count);
+query_count_simple!(ggxxacplusrs, get_ggxxacplusr_count);
+query_count_simple!(akbs, get_akb_count);
+query_count_simple!(vsavs, get_vsav_count);

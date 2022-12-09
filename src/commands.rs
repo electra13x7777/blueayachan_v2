@@ -35,7 +35,7 @@ pub type Callback = fn(u8, PrivmsgMessage) -> String;// Option<String>;
 
 pub struct EventHandler
 {
-    pub bot_username: String,
+    pub bot_nick: String,
     pub command_map: HashMap<String, Callback>,
 }
 
@@ -70,7 +70,7 @@ impl EventHandler
             let out = self.command_map.get(&name).expect("Some shit went wrong!");
             let res = String::from(out(runtype, msg.clone()));
             let dt_fmt = chrono::offset::Local::now().format("%H:%M:%S").to_string();
-            println!("[{}] #{} <{}>: {}", dt_fmt, msg.channel_login, self.bot_username, res);
+            println!("[{}] #{} <{}>: {}", dt_fmt, msg.channel_login, self.bot_nick, res);
             client.say(
                     msg.channel_login.clone(),
             format!("{}", res)
@@ -380,3 +380,84 @@ pub fn me(runtype: u8, msg_ctx: PrivmsgMessage) -> String
         _ => {return String::from("");},
     }
 }
+
+pub fn melty(runtype: u8, msg_ctx: PrivmsgMessage) -> String
+{
+    match runtype
+    {
+        b'!' =>
+        {
+            let id: i32 = rand::thread_rng().gen_range(1..=get_melty_count()).try_into().unwrap();
+            let queried_string: String = query_melty(id);
+            let moonstyle_r: i8 = rand::thread_rng().gen_range(0..3);
+            let moon: &str = match moonstyle_r
+            {
+                0 => "Crecent Moon",
+                1 => "Half Moon",
+                2 => "Full Moon",
+                _ => "",
+            };
+            return format!("{} your new main in Melty Blood: Actress Again is {} {}!", msg_ctx.sender.name, moon.to_string(), queried_string);
+        },
+        b'?' =>
+        {
+            return format!("This command gives you a brand new main for Melty Blood: Actress Again");
+        },
+        _ => {return String::from("");},
+    }
+}
+
+// SIMPLE GACHA COMMANDS
+macro_rules! generate_simple_gacha
+{
+    ($fn_name:ident, $game_name:literal, $count:ident, $query_fn:ident) =>
+    {
+        pub fn $fn_name(runtype: u8, msg_ctx: PrivmsgMessage) -> String
+        {
+            match runtype
+            {
+                b'!' =>
+                {
+                    let id: i32 = rand::thread_rng().gen_range(1..=$count()).try_into().unwrap();
+                    let queried_string: String = $query_fn(id);
+                    return format!("{} your new main in {} is {}!", msg_ctx.sender.name, $game_name, queried_string);
+                },
+                b'?' =>
+                {
+                    return format!("This command gives you a brand new main for {}", $game_name);
+                },
+                _ => {return String::from("");},
+            }
+        }
+    };
+}
+generate_simple_gacha!(lumina, "Melty Blood: Type Lumina", get_lumina_count, query_lumina);
+generate_simple_gacha!(melee, "Super Smash Bros. Melee", get_melee_count, query_melee);
+generate_simple_gacha!(soku, "Touhou 12.3: Hisoutensoku", get_soku_count, query_soku);
+generate_simple_gacha!(bbcf, "BlazBlue Centralfiction", get_bbcf_count, query_bbcf);
+generate_simple_gacha!(ggxxacplusr, "Guilty Gear XX Accent Core Plus R", get_ggxxacplusr_count, query_ggxxacplusr);
+generate_simple_gacha!(akb, "Akatsuki Blitzkampf Ausf. Achse", get_akb_count, query_akb);
+generate_simple_gacha!(vsav, "Vampire Savior: The Lord of Vampire", get_vsav_count, query_vsav);
+
+// SIMPLE STRING COMMANDS
+// a simple command is a command that generates the same text string every time
+macro_rules! generate_simple_command
+{
+    ($fn_name:ident, $text:literal) =>
+    {
+        pub fn $fn_name(runtype: u8, msg_ctx: PrivmsgMessage) -> String
+        {
+            match runtype
+            {
+                b'!' =>
+                {
+                    return format!($text);
+                }
+                _ => {return String::from("");},
+            }
+        }
+    };
+}
+generate_simple_command!(cmds, "Current Commands: dreamboumtweet, demongacha, savedemon, hornedanimegacha, melty, lumina, melee, soku, bbcf, ggxxacplusr, akb, vsav, me, help, cmds");
+generate_simple_command!(help, "Blueayachan version 2 supports multiple different \"runtype\" characters : \'!\' is supposed to produce similar functionality to the previous bot. \'?\' should give information and help regarding that command. \'#\' does the standard command with different functionality that is specific to the command itself. for a list of commands type !cmds");
+generate_simple_command!(poll, "THERE'S STILL TIME TO VOTE IN THE POLL! http://bombch.us/DYOt CirnoGenius");

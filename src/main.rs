@@ -67,6 +67,28 @@ async fn main() -> anyhow::Result<()>
         println!("{}", format!("{:#?}", line));
     }
 
+    // TEMP SETUP COMMANDS
+    let bot_nick: String = bot_username.clone();
+    let mut handler = EventHandler { bot_nick, command_map: HashMap::new() };
+    handler.add_command(String::from("test"), commands::test_command);
+    handler.add_command(String::from("dreamboumtweet"), commands::dreamboumtweet);
+    handler.add_command(String::from("demongacha"), commands::demongacha);
+    handler.add_command(String::from("savedemon"), commands::savedemon);
+    handler.add_command(String::from("hornedanimegacha"), commands::hornedanimegacha);
+    handler.add_command(String::from("melty"), commands::melty);
+    handler.add_command(String::from("lumina"), commands::lumina);
+    handler.add_command(String::from("melee"), commands::melee);
+    handler.add_command(String::from("soku"), commands::soku);
+    handler.add_command(String::from("bbcf"), commands::bbcf);
+    handler.add_command(String::from("ggxxacplusr"), commands::ggxxacplusr);
+    handler.add_command(String::from("akb"), commands::akb);
+    handler.add_command(String::from("vsav"), commands::vsav);
+    handler.add_command(String::from("me"), commands::me);
+    handler.add_command(String::from("args"), commands::test_args);
+    handler.add_command(String::from("help"), commands::help);
+    handler.add_command(String::from("cmds"), commands::cmds);
+    handler.add_command(String::from("poll"), commands::poll);
+
     let config =
     ClientConfig::new_simple(StaticLoginCredentials::new(bot_username.clone(), Some(oauth_token)));
     let (mut incoming_messages, client) = Twitch_Client::new(config);
@@ -80,7 +102,7 @@ async fn main() -> anyhow::Result<()>
             {
                 let dt_fmt = chrono::offset::Local::now().format("%H:%M:%S").to_string();
                 println!("[{}] #{} <{}>: {}", dt_fmt, msg.channel_login, &msg.sender.name, msg.message_text);
-                handle_priv(clone.clone(), bot_username.clone(), msg).await;
+                handle_priv(clone.clone(), bot_username.clone(), msg, &handler).await;
             }
         }
     });
@@ -92,17 +114,9 @@ async fn main() -> anyhow::Result<()>
 }
 
 // Handle Commands
-async fn handle_priv(client: Twitch_Client, bot_username: String, msg: PrivmsgMessage)
+async fn handle_priv(client: Twitch_Client, bot_username: String, msg: PrivmsgMessage, handler: &EventHandler)
 {
     //tracing::info!("Received message: {:#?}", msg);
-    let mut handler = EventHandler { bot_username, command_map: HashMap::new() };
-    handler.add_command(String::from("test"), commands::test_command);
-    handler.add_command(String::from("dreamboumtweet"), commands::dreamboumtweet);
-    handler.add_command(String::from("demongacha"), commands::demongacha);
-    handler.add_command(String::from("savedemon"), commands::savedemon);
-    handler.add_command(String::from("hornedanimegacha"), commands::hornedanimegacha);
-    handler.add_command(String::from("me"), commands::me);
-    handler.add_command(String::from("args"), commands::test_args);
 
     if let Some(runtype) = commands::Runtype::try_from_msg(&msg.message_text)
     {

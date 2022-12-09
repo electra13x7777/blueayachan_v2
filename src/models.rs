@@ -152,13 +152,14 @@ macro_rules! generate_simple_db_structs
 {
     ($db_name:ident,
     $new_struct_t:ident,
-    $struct_t:ident) =>
+    $struct_t:ident,
+    $gen_l:lifetime) =>
     {
         #[derive(Insertable)]
         #[diesel(table_name = $db_name)]
-        pub struct $new_struct_t<'a>
+        pub struct $new_struct_t<$gen_l>
         {
-            pub name: &'a str,
+            pub name: &$gen_l str,
         }
         #[derive(Queryable, Selectable)]
         #[diesel(table_name = $db_name)]
@@ -169,149 +170,12 @@ macro_rules! generate_simple_db_structs
         }
     };
 }
-generate_simple_db_structs!(hornedanimes, New_HornedAnime, HornedAnime);
-/*generate_simple_db_structs!(meltys, New_Melty, Melty);
-generate_simple_db_structs!(luminas, New_Lumina, Lumina);
-generate_simple_db_structs!(meltys, New_Melty, Melty);
-generate_simple_db_structs!(melees, New_Melee, Melee);
-generate_simple_db_structs!(sokus, New_Soku, Soku);
-generate_simple_db_structs!(bbcfs, New_BBCF, BBCF);
-generate_simple_db_structs!(ggxxacplusrs, New_GGXXACPLUSR, GGXXACPLUSR);
-generate_simple_db_structs!(akbs, New_AKB, AKB);
-generate_simple_db_structs!(vsavs, New_Vsav, Vsav);*/
-
-/*
-#[derive(Insertable)]
-#[diesel(table_name = hornedanimes)]
-pub struct New_HornedAnime<'a>
-{
-    pub name: &'a str,
-}
-
-#[derive(Queryable, Selectable)]
-#[diesel(table_name = hornedanimes)]
-pub struct HornedAnime
-{
-    pub id: i32,
-    pub name: String,
-}
-*/
-#[derive(Insertable)]
-#[diesel(table_name = meltys)]
-pub struct New_Melty<'a>
-{
-    pub name: &'a str,
-}
-
-#[derive(Queryable, Selectable)]
-#[diesel(table_name = meltys)]
-pub struct Melty
-{
-    pub id: i32,
-    pub name: String,
-}
-
-#[derive(Insertable)]
-#[diesel(table_name = luminas)]
-pub struct New_Lumina<'a>
-{
-    pub name: &'a str,
-}
-
-#[derive(Queryable, Selectable)]
-#[diesel(table_name = luminas)]
-pub struct Lumina
-{
-    pub id: i32,
-    pub name: String,
-}
-
-#[derive(Insertable)]
-#[diesel(table_name = melees)]
-pub struct New_Melee<'a>
-{
-    pub name: &'a str,
-}
-
-#[derive(Queryable, Selectable)]
-#[diesel(table_name = melees)]
-pub struct Melee
-{
-    pub id: i32,
-    pub name: String,
-}
-
-#[derive(Insertable)]
-#[diesel(table_name = sokus)]
-pub struct New_Soku<'a>
-{
-    pub name: &'a str,
-}
-
-#[derive(Queryable, Selectable)]
-#[diesel(table_name = sokus)]
-pub struct Soku
-{
-    pub id: i32,
-    pub name: String,
-}
-
-#[derive(Insertable)]
-#[diesel(table_name = bbcfs)]
-pub struct New_BBCF<'a>
-{
-    pub name: &'a str,
-}
-
-#[derive(Queryable, Selectable)]
-#[diesel(table_name = bbcfs)]
-pub struct BBCF
-{
-    pub id: i32,
-    pub name: String,
-}
-
-#[derive(Insertable)]
-#[diesel(table_name = ggxxacplusrs)]
-pub struct New_GGXXACPLUSR<'a>
-{
-    pub name: &'a str,
-}
-
-#[derive(Queryable, Selectable)]
-#[diesel(table_name = ggxxacplusrs)]
-pub struct GGXXACPLUSR
-{
-    pub id: i32,
-    pub name: String,
-}
-
-#[derive(Insertable)]
-#[diesel(table_name = akbs)]
-pub struct New_AKB<'a>
-{
-    pub name: &'a str,
-}
-
-#[derive(Queryable, Selectable)]
-#[diesel(table_name = akbs)]
-pub struct AKB
-{
-    pub id: i32,
-    pub name: String,
-}
-
-#[derive(Insertable)]
-#[diesel(table_name = vsavs)]
-pub struct New_Vsav<'a>
-{
-    pub name: &'a str,
-}
-
-#[derive(Queryable, Selectable)]
-#[diesel(table_name = vsavs)]
-pub struct Vsav
-{
-    pub id: i32,
-    pub name: String,
-}
+generate_simple_db_structs!(hornedanimes, New_HornedAnime, HornedAnime, 'a);
+generate_simple_db_structs!(meltys, New_Melty, Melty, 'a);
+generate_simple_db_structs!(luminas, New_Lumina, Lumina, 'a);
+generate_simple_db_structs!(melees, New_Melee, Melee, 'a);
+generate_simple_db_structs!(sokus, New_Soku, Soku, 'a);
+generate_simple_db_structs!(bbcfs, New_BBCF, BBCF, 'a);
+generate_simple_db_structs!(ggxxacplusrs, New_GGXXACPLUSR, GGXXACPLUSR, 'a);
+generate_simple_db_structs!(akbs, New_AKB, AKB, 'a);
+generate_simple_db_structs!(vsavs, New_Vsav, Vsav, 'a);
