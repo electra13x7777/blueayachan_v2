@@ -31,7 +31,7 @@ use crate::models::*;
 
 pub type Twitch_Client = TwitchIRCClient<SecureTCPTransport, StaticLoginCredentials>;
 // uses an unsigned 8bit int to signify what block to execute
-pub type Callback = fn(u8, PrivmsgMessage) -> String;// Option<String>;
+pub type Callback = fn(u8, PrivmsgMessage) -> String; //anyhow::Result<String>;// Option<String>;
 
 pub struct EventHandler
 {
@@ -461,3 +461,55 @@ macro_rules! generate_simple_command
 generate_simple_command!(cmds, "Current Commands: dreamboumtweet, demongacha, savedemon, hornedanimegacha, melty, lumina, melee, soku, bbcf, ggxxacplusr, akb, vsav, me, help, cmds");
 generate_simple_command!(help, "Blueayachan version 2 supports multiple different \"runtype\" characters : \'!\' is supposed to produce similar functionality to the previous bot. \'?\' should give information and help regarding that command. \'#\' does the standard command with different functionality that is specific to the command itself. for a list of commands type !cmds");
 generate_simple_command!(poll, "THERE'S STILL TIME TO VOTE IN THE POLL! http://bombch.us/DYOt CirnoGenius");
+
+
+// EXTERNAL QUERIES
+
+/*
+pub fn speedgame(runtype: u8, msg_ctx: PrivmsgMessage) -> String
+{
+    match runtype
+    {
+        b'!' =>
+        {
+            let game: String = speedgame_async().await.unwrap();
+            return format!("{} your new speedgame is {}!", msg_ctx.sender.name, game);
+        }
+        _ =>{format!("")}
+    }
+    /*
+    use rand::Rng;
+    let page_num: i32 = rand::thread_rng().gen_range(1..=6576).try_into().unwrap();//100;
+    let req_str = format!("https://www.speedrunslive.com/api/games?pageNumber={}&pageSize=1", page_num);
+    let data = reqwest::blocking::get(req_str).expect("")
+    //.await?
+    .text().expect("");
+    //.await?;
+    use serde_json::{Result, Value};
+    let mut results: HashMap<String, Value> = serde_json::from_str(&data).unwrap();
+    println!("{}", results["data"][0]["gameName"]);
+    return format!("{} your new speedgame is {}!", msg_ctx.sender.name, results["data"][0]["gameName"]);*/
+}
+
+async fn speedgame_async() -> anyhow::Result<()>
+{
+    // REFERENCE: https://zint.ch/2022/01/14/unofficial-srl-api-docs.html#get-apigames
+    //?sortBy=popularity
+    use rand::Rng;
+    let page_num: i32 = rand::thread_rng().gen_range(1..=6576).try_into().unwrap();//100;
+    let req_str = format!("https://www.speedrunslive.com/api/games?pageNumber={}&pageSize=1", page_num);
+    let data = reqwest::get(req_str)
+    .await?
+    .text()
+    .await?;
+    use serde_json::{Result, Value};
+    //let v: Value = serde_json::from_str(data.as_str())?;
+    let mut results: HashMap<String, Value> = serde_json::from_str(&data).unwrap();
+    println!("{}", results["data"][0]["gameName"]);
+    /*body = "{\"data\":[{\"gameName\":\"The Great Waldo Search (NES)\",\"gameAbbr
+    ev\":\"waldosearchnes\",\"gamePopularity\":0.000000,\"isSeasonGame\":false}]
+    ,\"totalPages\":6576,\"pageNumber\":917,\"pageSize\":1}"*/
+    //format!("{} your new speedgame is {}!", msg_ctx.sender.name, results["data"][0]["gameName"])
+    Ok((results["data"][0]["gameName"].to_string()));
+}
+*/
