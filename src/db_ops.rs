@@ -316,6 +316,7 @@ insert_val_to_db!(bbcfs, New_BBCF, insert_bbcf);
 insert_val_to_db!(ggxxacplusrs, New_GGXXACPLUSR, insert_ggxxacplusr);
 insert_val_to_db!(akbs, New_AKB, insert_akb);
 insert_val_to_db!(vsavs, New_Vsav, insert_vsav);
+insert_val_to_db!(jojos, New_Jojo, insert_jojo);
 
 // QUERY SIMPLE STRING FROM DATABASE
 macro_rules! query_string_simple
@@ -340,6 +341,7 @@ query_string_simple!(bbcfs, BBCF, query_bbcf);
 query_string_simple!(ggxxacplusrs, GGXXACPLUSR, query_ggxxacplusr);
 query_string_simple!(akbs, AKB, query_akb);
 query_string_simple!(vsavs, Vsav, query_vsav);
+query_string_simple!(jojos, Jojo, query_jojo);
 
 
 // GET TOTAL ITEMS IN TABLE
@@ -367,3 +369,4 @@ query_count_simple!(bbcfs, get_bbcf_count);
 query_count_simple!(ggxxacplusrs, get_ggxxacplusr_count);
 query_count_simple!(akbs, get_akb_count);
 query_count_simple!(vsavs, get_vsav_count);
+query_count_simple!(jojos, get_jojo_count);

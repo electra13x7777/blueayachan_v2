@@ -179,3 +179,4 @@ generate_simple_db_structs!(bbcfs, New_BBCF, BBCF, 'a);
 generate_simple_db_structs!(ggxxacplusrs, New_GGXXACPLUSR, GGXXACPLUSR, 'a);
 generate_simple_db_structs!(akbs, New_AKB, AKB, 'a);
 generate_simple_db_structs!(vsavs, New_Vsav, Vsav, 'a);
+generate_simple_db_structs!(jojos, New_Jojo, Jojo, 'a);

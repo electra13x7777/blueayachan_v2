@@ -70,7 +70,8 @@ async fn main() -> anyhow::Result<()>
     // TEMP SETUP COMMANDS
     let bot_nick: String = bot_username.clone();
     let mut handler = EventHandler { bot_nick, command_map: HashMap::new() };
-    handler.add_command(String::from("test"), commands::test_command);
+    //handler.add_command(String::from("test"), commands::test_command);
+
     handler.add_command(String::from("dreamboumtweet"), commands::dreamboumtweet);
     handler.add_command(String::from("demongacha"), commands::demongacha);
     handler.add_command(String::from("savedemon"), commands::savedemon);
@@ -83,13 +84,16 @@ async fn main() -> anyhow::Result<()>
     handler.add_command(String::from("ggxxacplusr"), commands::ggxxacplusr);
     handler.add_command(String::from("akb"), commands::akb);
     handler.add_command(String::from("vsav"), commands::vsav);
+    handler.add_command(String::from("jojos"), commands::jojos);
 
     handler.add_command(String::from("me"), commands::me);
-    handler.add_command(String::from("args"), commands::test_args);
+    //handler.add_command(String::from("args"), commands::test_args);
     handler.add_command(String::from("help"), commands::help);
     handler.add_command(String::from("cmds"), commands::cmds);
     handler.add_command(String::from("poll"), commands::poll);
-    //handler.add_command(String::from("speedgame"), commands::speedgame);
+    handler.add_command(String::from("repo"), commands::repo);
+    // NON BLOCKING
+    handler.add_command(String::from("speedgame"), commands::async_placeholder);
 
     let config =
     ClientConfig::new_simple(StaticLoginCredentials::new(bot_username.clone(), Some(oauth_token)));

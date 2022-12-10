@@ -18,6 +18,7 @@
 * Demongacha ported (You can now save your previous demon with !savedemon and view it with #demongacha)
 * HornedAnimeGacha is back!
 * All classic fightgame main commands are back!
+* An all new way to get your next speedgame from SRL!
 ### DB
 * Blueayachan User table
 * Roles table
@@ -30,7 +31,10 @@
 * '!': GENERIC COMMAND - Is supposed to produce similar functionality to the previous bot. When in doubt use this!
 * '?': HELP COMMAND - Should give information and help regarding that command. If you need help using a specific command run it with this!
 * '#': SPECIAL COMMAND - Does the standard command with different functionality that is specific to the command itself.
+### Get Started
+* type `!help` to get a description of how the bot can be used.
+* type `!cmds` to get a list of supported commands.
 
 ### More to come soon!
 [Blueayachan Version 1](https://github.com/electra13x7777/blueayachan)
-#### Date Last Updated: 12/09/2022
+#### Date Last Updated: 12/10/2022
