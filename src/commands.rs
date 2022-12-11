@@ -30,9 +30,11 @@ use crate::db_ops::*;
 use crate::models::*;
 
 pub type Twitch_Client = TwitchIRCClient<SecureTCPTransport, StaticLoginCredentials>;
-// uses an unsigned 8bit int to signify what block to execute
-pub type Callback = fn(u8, PrivmsgMessage) -> anyhow::Result<String>;//String; //anyhow::Result<String>;// Option<String>;
-//pub type Callback = fn(u8, PrivmsgMessage) -> impl Future<Output= anyhow::Result<String>>;
+
+// CALLBACK TYPES (Blocking, Non-Blocking)
+pub type Callback = fn(u8, PrivmsgMessage) -> anyhow::Result<String>;
+//pub type Callback_a = Box<dyn Fn(u8, PrivmsgMessage) -> Pin<Box<dyn Future<Output = anyhow::Result<String>>>> + 'static + Send + Sync,>;
+
 
 pub struct EventHandler
 {
@@ -47,6 +49,19 @@ impl EventHandler
         self.command_map.insert(name, function);
     }
 
+/*
+impl EventHandler
+{
+    fn insert_command<Cb, F>(&mut self, name: String, function: Cb)
+    where
+    Cb: Fn(u8, PrivmsgMessage) -> F + 'static + Send + Sync,
+    F: Future<Output = anyhow::Result<String>> + 'static + Send + Sync,
+    {
+        let cb = Box::new(move |a, b| Box::pin(function(a, b)) as _);
+        self.command_map.insert(name, cb);
+    }
+}
+*/
     /*
         COMMAND METHODOLOGY
             - Each command can have multiple different ouputs
@@ -63,7 +78,6 @@ impl EventHandler
     */
     pub async fn execute_command(&self, name: String, client: Twitch_Client, msg: PrivmsgMessage) -> anyhow::Result<()>
     {
-        //print!("{}\n", name);
         if self.command_map.contains_key(&name)
         {
             handle_bac_user_in_db(msg.sender.name.clone()); // Updates user database
@@ -73,7 +87,11 @@ impl EventHandler
             if self.command_map[&name] == async_placeholder // ASYNC COMMAND
             {
                 // TODO: try to find a way to make a fn pointer for Futures
-                let res = query_srl(runtype, msg.clone()).await.unwrap();
+                let res = match &name[..]
+                {
+                    "speedgame" => query_srl(runtype, msg.clone()).await.unwrap(),
+                    _ => return Ok(()),
+                };
                 let dt_fmt = chrono::offset::Local::now().format("%H:%M:%S").to_string();
                 println!("[{}] #{} <{}>: {}", dt_fmt, msg.channel_login, self.bot_nick, res);
                 client.say(
@@ -83,7 +101,7 @@ impl EventHandler
             }
             else // BLOCKING COMMAND
             {
-                let out = self.command_map.get(&name).expect("Some shit went wrong!");
+                let out = self.command_map.get(&name).expect("Could not execute function pointer!");
                 let res = String::from(out(runtype, msg.clone()).unwrap());
                 let dt_fmt = chrono::offset::Local::now().format("%H:%M:%S").to_string();
                 println!("[{}] #{} <{}>: {}", dt_fmt, msg.channel_login, self.bot_nick, res);
@@ -145,7 +163,7 @@ pub async fn test_command(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Resul
         {
             return Ok(String::from("Test Tilde Block"));
         },
-        _ => {panic!()},
+        _ => {Ok(String::from(""))},
     }
 }
 
@@ -211,7 +229,6 @@ pub fn dreamboumtweet(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<St
         },
         b'?' =>
         {
-
             return Ok(format!("This command sends a random tweet made by twitter user @Dreamboum. TOTAL_TWEETS: {}", get_dbt_count()));
         },
         b'#' =>
@@ -233,7 +250,7 @@ pub fn dreamboumtweet(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<St
         },
         _ =>
         {
-            panic!()
+            Ok(String::from(""))
         },
     }
 }
@@ -305,7 +322,7 @@ pub fn demongacha(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String
         },
         _ =>
         {
-            panic!()
+            Ok(String::from(""))
         },
     }
 }
@@ -328,7 +345,7 @@ pub fn savedemon(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
         },
         _ =>
         {
-            panic!()
+            Ok(String::from(""))
         },
     }
 }
@@ -376,7 +393,7 @@ pub fn hornedanimegacha(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<
         },
         _ =>
         {
-            panic!()
+            Ok(String::from(""))
         },
     }
 }
@@ -392,7 +409,7 @@ pub fn me(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
         },
         b'?' =>
         {
-            return Ok(format!("BAC User {} added on {}", msg_ctx.sender.name, user_data.date_added));
+            return Ok(format!("This command returns information based on your usage of the bot."));
         },
         b'#' =>
         {
@@ -405,7 +422,7 @@ pub fn me(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
                 return Ok(format!("{} has used commands {} times!", msg_ctx.sender.name, user_data.num_commands));
             }
         },
-        _ => {panic!()},
+        _ => {Ok(String::from(""))},
     }
 }
 
@@ -431,7 +448,7 @@ pub fn melty(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
         {
             return Ok(format!("This command gives you a brand new main for Melty Blood: Actress Again"));
         },
-        _ => {panic!()},
+        _ => {Ok(String::from(""))},
     }
 }
 
@@ -454,7 +471,7 @@ macro_rules! generate_simple_gacha
                 {
                     return Ok(format!("This command gives you a brand new main for {}", $game_name));
                 },
-                _ => {panic!()},
+                _ => {Ok(String::from(""))},
             }
         }
     };
@@ -467,6 +484,7 @@ generate_simple_gacha!(ggxxacplusr, "Guilty Gear XX Accent Core Plus R", get_ggx
 generate_simple_gacha!(akb, "Akatsuki Blitzkampf Ausf. Achse", get_akb_count, query_akb);
 generate_simple_gacha!(vsav, "Vampire Savior: The Lord of Vampire", get_vsav_count, query_vsav);
 generate_simple_gacha!(jojos, "JoJo\'s Bizarre Adventure: Heritage for the Future", get_jojo_count, query_jojo);
+generate_simple_gacha!(millions, "Million Arthur: Arcana Blood", get_millions_count, query_millions);
 
 // SIMPLE STRING COMMANDS
 // a simple command is a command that generates the same text string every time
@@ -482,12 +500,12 @@ macro_rules! generate_simple_command
                 {
                     return Ok(format!($text));
                 }
-                _ => {panic!()},
+                _ => {Ok(String::from(""))},
             }
         }
     };
 }
-generate_simple_command!(cmds, "Current Commands: dreamboumtweet, demongacha, savedemon, hornedanimegacha, speedgame, melty, lumina, melee, soku, bbcf, ggxxacplusr, akb, vsav, jojos, me, help, cmds, repo");
+generate_simple_command!(cmds, "Current Commands: dreamboumtweet, demongacha, savedemon, hornedanimegacha, speedgame, melty, lumina, melee, soku, bbcf, ggxxacplusr, akb, vsav, jojos, millions, me, help, cmds, repo");
 generate_simple_command!(help, "Blueayachan version 2 supports multiple different \"runtype\" characters : \'!\' is supposed to produce similar functionality to the previous bot. \'?\' should give information and help regarding that command. \'#\' does the standard command with different functionality that is specific to the command itself. for a list of commands type !cmds");
 generate_simple_command!(poll, "THERE'S STILL TIME TO VOTE IN THE POLL! http://bombch.us/DYOt CirnoGenius");
 generate_simple_command!(repo, "You can find the githup repository here: https://github.com/electra13x7777/blueayachan_v2");
@@ -548,6 +566,6 @@ async fn query_srl(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<Strin
             //pop.replace("\"", "");
             return Ok(format!("{} your new speedgame is {}! Its popularity rating on SRL is {} TenshiWow o O ( Wow so popular! ) ", msg_ctx.sender.name, game.replace("\"", ""), pop.replace("\"", "")));
         },
-        _ => panic!(),
+        _ => Ok(String::from("")),
     }
 }

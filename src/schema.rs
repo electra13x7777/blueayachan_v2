@@ -66,6 +66,13 @@ diesel::table! {
 }
 
 diesel::table! {
+    jojos (id) {
+        id -> Int4,
+        name -> Varchar,
+    }
+}
+
+diesel::table! {
     luminas (id) {
         id -> Int4,
         name -> Varchar,
@@ -81,6 +88,13 @@ diesel::table! {
 
 diesel::table! {
     meltys (id) {
+        id -> Int4,
+        name -> Varchar,
+    }
+}
+
+diesel::table! {
+    millions (id) {
         id -> Int4,
         name -> Varchar,
     }
@@ -116,13 +130,6 @@ diesel::table! {
     }
 }
 
-diesel::table! {
-    jojos (id) {
-        id -> Int4,
-    name -> Varchar,
-    }
-}
-
 diesel::joinable!(bac_user_demons -> blueayachanuser (user_id));
 diesel::joinable!(blueayachanuser_roles -> blueayachanuser (user_id));
 diesel::joinable!(blueayachanuser_roles -> roles (role_id));
@@ -136,12 +143,13 @@ diesel::allow_tables_to_appear_in_same_query!(
     dreamboumtweets,
     ggxxacplusrs,
     hornedanimes,
+    jojos,
     luminas,
     melees,
     meltys,
+    millions,
     nocturnedemons,
     roles,
     sokus,
     vsavs,
-    jojos,
 );

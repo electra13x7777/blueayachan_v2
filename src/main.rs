@@ -57,7 +57,8 @@ async fn main() -> anyhow::Result<()>
     let oauth_token =
     env::var("OAUTH_TOKEN").context("missing OAUTH_TOKEN environment variable")?;
     // TODO: channels should be queried from a database
-    let channel = env::var("CHANNEL_NAME").context("missing CHANNEL_NAME environment variable")?;
+    //let channel = env::var("CHANNEL_NAME").context("missing CHANNEL_NAME environment variable")?;
+    let channels = readlines_to_vec("assets/channels.txt").expect("Failed to read file");
     //let wink = env::var("WINK").context("missing CHANNEL_NAME environment variable")?;
     let aya_vec = readlines_to_vec("assets/ayawink.txt");
     let av_iter = aya_vec.iter();
@@ -85,6 +86,7 @@ async fn main() -> anyhow::Result<()>
     handler.add_command(String::from("akb"), commands::akb);
     handler.add_command(String::from("vsav"), commands::vsav);
     handler.add_command(String::from("jojos"), commands::jojos);
+    handler.add_command(String::from("millions"), commands::millions);
 
     handler.add_command(String::from("me"), commands::me);
     //handler.add_command(String::from("args"), commands::test_args);
@@ -112,9 +114,10 @@ async fn main() -> anyhow::Result<()>
             }
         }
     });
-
-    client.join(channel).unwrap();
-
+    for channel in channels
+    {
+        client.join(channel.to_lowercase()).unwrap();
+    }
     join_handle.await.unwrap();
     Ok(())
 }

@@ -85,7 +85,7 @@ pub fn insert_role(role_str: String)
     .execute(&mut connection)
     .expect("Error inserting new role");
 }
-/*
+/* // TODO: BAC USER ROLES
 pub fn insert_bac_user_role(user_nick_str: String, role_str: String)
 {
     use crate::schema::blueayachanuser::dsl::*;
@@ -317,6 +317,7 @@ insert_val_to_db!(ggxxacplusrs, New_GGXXACPLUSR, insert_ggxxacplusr);
 insert_val_to_db!(akbs, New_AKB, insert_akb);
 insert_val_to_db!(vsavs, New_Vsav, insert_vsav);
 insert_val_to_db!(jojos, New_Jojo, insert_jojo);
+insert_val_to_db!(millions, New_Millions, insert_millions);
 
 // QUERY SIMPLE STRING FROM DATABASE
 macro_rules! query_string_simple
@@ -342,7 +343,7 @@ query_string_simple!(ggxxacplusrs, GGXXACPLUSR, query_ggxxacplusr);
 query_string_simple!(akbs, AKB, query_akb);
 query_string_simple!(vsavs, Vsav, query_vsav);
 query_string_simple!(jojos, Jojo, query_jojo);
-
+query_string_simple!(millions, Millions, query_millions);
 
 // GET TOTAL ITEMS IN TABLE
 macro_rules! query_count_simple
@@ -370,3 +371,4 @@ query_count_simple!(ggxxacplusrs, get_ggxxacplusr_count);
 query_count_simple!(akbs, get_akb_count);
 query_count_simple!(vsavs, get_vsav_count);
 query_count_simple!(jojos, get_jojo_count);
+query_count_simple!(millions, get_millions_count);
