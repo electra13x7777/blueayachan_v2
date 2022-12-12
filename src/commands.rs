@@ -16,6 +16,8 @@ use std::
     collections::HashMap,
     io,
     io::{prelude::*, BufReader, Write},
+    future::Future,
+    pin::Pin,
 };
 use rand::Rng;
 //use chrono;
@@ -36,8 +38,8 @@ use crate::models::*;
 pub type Twitch_Client = TwitchIRCClient<SecureTCPTransport, StaticLoginCredentials>;
 
 // CALLBACK TYPES (Blocking, Non-Blocking) [Function Pointers]
-pub type Callback = fn(u8, PrivmsgMessage) -> anyhow::Result<String>;
-//pub type Callback_a = Box<dyn Fn(u8, PrivmsgMessage) -> Pin<Box<dyn Future<Output = anyhow::Result<String>>>> + 'static + Send + Sync,>;
+//pub type Callback = fn(u8, PrivmsgMessage) -> anyhow::Result<String>;
+pub type Callback = Box<dyn Fn(u8, PrivmsgMessage) -> Pin<Box<dyn Future<Output = anyhow::Result<String>> + 'static + Send + Sync,>> + 'static + Send + Sync,>;
 
 
 pub struct EventHandler
@@ -48,15 +50,8 @@ pub struct EventHandler
 
 impl EventHandler
 {
-    pub fn add_command(&mut self, name: String, function: Callback)
-    {
-        self.command_map.insert(name, function);
-    }
-
-/*
-impl EventHandler
-{
-    fn insert_command<Cb, F>(&mut self, name: String, function: Cb)
+    // Thank you Azuchang!
+    pub fn add_command<Cb, F>(&mut self, name: String, function: Cb)
     where
     Cb: Fn(u8, PrivmsgMessage) -> F + 'static + Send + Sync,
     F: Future<Output = anyhow::Result<String>> + 'static + Send + Sync,
@@ -64,8 +59,7 @@ impl EventHandler
         let cb = Box::new(move |a, b| Box::pin(function(a, b)) as _);
         self.command_map.insert(name, cb);
     }
-}
-*/
+
     /*
         COMMAND METHODOLOGY
             - Each command can have multiple different ouputs
@@ -88,45 +82,17 @@ impl EventHandler
             const COMMAND_INDEX: usize = 0;
             let runtype: u8 = msg.message_text.clone().as_bytes()[COMMAND_INDEX]; // gets a byte literal (Ex. b'!')
             // TODO: Make this a special case for non blocking commands
-            if self.command_map[&name] == async_placeholder // ASYNC COMMAND
+            let out = self.command_map.get(&name).expect("Could not execute function pointer!");
+            let res = String::from(out(runtype, msg.clone()).await.unwrap());
+            let dt_fmt = chrono::offset::Local::now().format("%H:%M:%S").to_string();
+            const color_flag: bool = true;
+            match color_flag
             {
-                // TODO: try to find a way to make a fn pointer for Futures
-                let res = match &name[..]
-                {
-                    "speedgame" => query_srl(runtype, msg.clone()).await.unwrap(),
-                    "pic" => query_safebooru(runtype, msg.clone()).await.unwrap(),
-                    _ => return Ok(()),
-                };
-                let dt_fmt = chrono::offset::Local::now().format("%H:%M:%S").to_string();
-                const color_flag: bool = true;
-                match color_flag
-                {
-                    true => println!("[{}] #{} <{}>: {}", dt_fmt.truecolor(138, 138, 138), msg.channel_login.truecolor(117, 97, 158), self.bot_nick.red(), res),
-                    false => println!("[{}] #{} <{}>: {}", dt_fmt, msg.channel_login, self.bot_nick, res),
-                }
-                if &res == ""{return Ok(());} // if we have nothing to send skip the send
-                client.say(
-                        msg.channel_login.clone(),
-                format!("{}", res)
-                ).await?;
+                true => println!("[{}] #{} <{}>: {}", dt_fmt.truecolor(138, 138, 138), msg.channel_login.truecolor(117, 97, 158), self.bot_nick.red(), res),
+                false => println!("[{}] #{} <{}>: {}", dt_fmt, msg.channel_login, self.bot_nick, res),
             }
-            else // BLOCKING COMMAND
-            {
-                let out = self.command_map.get(&name).expect("Could not execute function pointer!");
-                let res = String::from(out(runtype, msg.clone()).unwrap());
-                let dt_fmt = chrono::offset::Local::now().format("%H:%M:%S").to_string();
-                const color_flag: bool = true;
-                match color_flag
-                {
-                    true => println!("[{}] #{} <{}>: {}", dt_fmt.truecolor(138, 138, 138), msg.channel_login.truecolor(117, 97, 158), self.bot_nick.red(), res),
-                    false => println!("[{}] #{} <{}>: {}", dt_fmt, msg.channel_login, self.bot_nick, res),
-                }
-                if &res == ""{return Ok(());} // if we have nothing to send skip the send
-                client.say(
-                        msg.channel_login.clone(),
-                format!("{}", res)
-                ).await?;
-            }
+            if &res == ""{return Ok(());} // if we have nothing to send skip the send
+            client.say(msg.channel_login.clone(), format!("{}", res)).await?;
         }
         Ok(())
     }
@@ -184,7 +150,7 @@ pub async fn test_command(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Resul
     }
 }
 
-pub fn dreamboumtweet(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>//Option<String>//(String, String)
+pub async fn dreamboumtweet(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>//Option<String>//(String, String)
 {
     //const TOTAL_TWEETS: usize = 6569;
     match runtype
@@ -224,7 +190,7 @@ pub fn dreamboumtweet(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<St
 }
 
 // DEMONGACHA
-pub fn demongacha(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+pub async fn demongacha(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
 {
     //const TOTAL_TWEETS: usize = 6569;
     match runtype
@@ -295,7 +261,7 @@ pub fn demongacha(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String
     }
 }
 
-pub fn savedemon(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+pub async fn savedemon(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
 {
     //const TOTAL_TWEETS: usize = 6569;
     match runtype
@@ -319,7 +285,7 @@ pub fn savedemon(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
 }
 
 
-pub fn hornedanimegacha(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+pub async fn hornedanimegacha(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
 {
     //const TOTAL_TWEETS: usize = 6569;
     match runtype
@@ -366,7 +332,7 @@ pub fn hornedanimegacha(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<
     }
 }
 
-pub fn me(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+pub async fn me(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
 {
     let user_data: BACUser = query_user_data(msg_ctx.sender.name.to_lowercase());
     match runtype
@@ -394,7 +360,7 @@ pub fn me(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
     }
 }
 
-pub fn melty(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+pub async fn melty(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
 {
     match runtype
     {
@@ -425,7 +391,7 @@ macro_rules! generate_simple_gacha
 {
     ($fn_name:ident, $game_name:literal, $count:ident, $query_fn:ident) =>
     {
-        pub fn $fn_name(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+        pub async fn $fn_name(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
         {
             match runtype
             {
@@ -460,7 +426,7 @@ macro_rules! generate_simple_command
 {
     ($fn_name:ident, $text:literal) =>
     {
-        pub fn $fn_name(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+        pub async fn $fn_name(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
         {
             match runtype
             {
@@ -479,7 +445,7 @@ generate_simple_command!(poll, "THERE'S STILL TIME TO VOTE IN THE POLL! http://b
 generate_simple_command!(repo, "You can find the githup repository here: https://github.com/electra13x7777/blueayachan_v2");
 
 
-pub fn pick(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+pub async fn pick(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
 {
     match runtype
     {
@@ -510,13 +476,10 @@ pub fn pick(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
 //                     NON-BLOCKING COMMAND IMPLEMENTATIONS                  //
 ///////////////////////////////////////////////////////////////////////////////
 
-// this is terrible design - placeholder function to map to async commands
-pub fn async_placeholder(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
-{
-    Ok(String::from("A Placeholder function"))
-}
-
-async fn query_srl(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+// Comamand: !speedgame
+//
+//
+pub async fn query_srl(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
 {
     match runtype
     {
@@ -561,7 +524,10 @@ pub struct SafebooruPosts
     post: Vec<SafebooruPost>,
 }
 
-async fn query_safebooru(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+// Command: !pic
+//
+//
+pub async fn query_safebooru(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
 {
     match runtype
     {
@@ -575,20 +541,19 @@ async fn query_safebooru(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result
             };
             // should we ever want to refactor to have whitespace split the 2 tag arguments
             //args.split_whitespace().collect::<Vec<_>>().join("+")
-            let req_str = format!("https://safebooru.org/index.php?page=dapi&s=post&q=index&tags={}", &args);
+            let req_str = format!("https://safebooru.org/index.php?page=dapi&s=post&q=index&rating=g&tags={}+-rating:questionable", &args.to_lowercase());
             let data = reqwest::get(req_str).await?.text().await?;
-
             let posts: SafebooruPosts = match serde_xml_rs::from_str(&data)
             {
                 Ok(posts) => posts,
-                _ => return Ok(format!("No results found for given arguments: {}", &args)),
+                _ => return Ok(format!("No results found for given arguments: {} https://imgur.com/a/vQsv7Rj", &args)),
             };
             let index: usize = rand::thread_rng().gen_range(0..posts.post.len());
             Ok(posts.post[index].file_url.to_owned())
         },
         b'?' =>
         {
-            Ok(format!("This command queries an image from Safebooru. Use '*' to autocomplete a tag and '+' to add an additional tag(s) to query with. | USAGE: !pic, !pic TAG, !pic TAG1+TAG2, !pic TAG1+...+TAGn | !pic shadow_h*from_*world+j*garland -> TAG1 = shadow_hearts_from_the_new_world, TAG2 = johnny_garland"))
+            Ok(format!("This command queries an image from Safebooru. Use '*' to autocomplete a tag, a '+' to add an additional tag(s) to query with, or '-' to omit a tag from the search. | USAGE: !pic, !pic TAG, !pic TAG1+TAG2, !pic TAG1+...+TAGn, !pic TAG1+-TAG2 | !pic shadow_h*from_*world+j*garland -> TAG1 = shadow_hearts_from_the_new_world, TAG2 = johnny_garland"))
         },
         _ => Ok(String::from("")),
     }
