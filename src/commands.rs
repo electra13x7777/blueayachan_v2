@@ -473,11 +473,38 @@ macro_rules! generate_simple_command
         }
     };
 }
-generate_simple_command!(cmds, "Current Commands: dreamboumtweet, demongacha, savedemon, hornedanimegacha, speedgame, pic, melty, lumina, melee, soku, bbcf, ggxxacplusr, akb, vsav, jojos, millions, me, help, cmds, repo");
+generate_simple_command!(cmds, "Current Commands: dreamboumtweet, demongacha, savedemon, hornedanimegacha, speedgame, pic, pick, melty, lumina, melee, soku, bbcf, ggxxacplusr, akb, vsav, jojos, millions, me, help, cmds, repo");
 generate_simple_command!(help, "Blueayachan version 2 supports multiple different \"runtype\" characters : \'!\' is supposed to produce similar functionality to the previous bot. \'?\' should give information and help regarding that command. \'#\' does the standard command with different functionality that is specific to the command itself. for a list of commands type !cmds");
 generate_simple_command!(poll, "THERE'S STILL TIME TO VOTE IN THE POLL! http://bombch.us/DYOt CirnoGenius");
 generate_simple_command!(repo, "You can find the githup repository here: https://github.com/electra13x7777/blueayachan_v2");
 
+
+pub fn pick(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+{
+    match runtype
+    {
+        b'!' =>
+        {
+            let text = msg_ctx.message_text.as_str(); // get str from msg context
+            let (name, args) = match text.split_once(' ')
+            {
+                Some((name, args)) => (name, args),
+                None => (text, ""),
+            };
+            // should we ever want to refactor to have whitespace split the 2 tag arguments
+            let argv: Vec<String> = args.split(' ').map(|s| s.to_string()).collect();
+            //args.split_whitespace().collect();//::<Vec<String>>();//.join("+")
+            let index: usize = rand::thread_rng().gen_range(0..argv.len());
+            Ok(format!("picks {}", argv[index]))
+
+        },
+        b'?' =>
+        {
+            Ok(format!("This command picks a single argument from input provided via message. Use whitespace to make another argument for the bot to pick from (will be better in the future) | USAGE: !pick, !pick ARG, !pick ARG1 ARG2, !pick ARG1 ... ARGn |"))
+        },
+        _ => Ok(String::from("")),
+    }
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //                     NON-BLOCKING COMMAND IMPLEMENTATIONS                  //

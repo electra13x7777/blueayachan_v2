@@ -94,6 +94,7 @@ async fn main() -> anyhow::Result<()>
     handler.add_command(String::from("vsav"), commands::vsav);
     handler.add_command(String::from("jojos"), commands::jojos);
     handler.add_command(String::from("millions"), commands::millions);
+    handler.add_command(String::from("pick"), commands::pick);
 
     handler.add_command(String::from("me"), commands::me);
     //handler.add_command(String::from("args"), commands::test_args);
