@@ -25,13 +25,17 @@ use twitch_irc::
     message::{PrivmsgMessage, ServerMessage},
     ClientConfig, SecureTCPTransport, TwitchIRCClient,
 };
+use colored::*;
+use serde::{Deserialize, Serialize};
+use serde_xml_rs::{from_str, to_string};
+use serde_json::{Result, Value};
 use crate::helpers::readlines_to_vec;
 use crate::db_ops::*;
 use crate::models::*;
 
 pub type Twitch_Client = TwitchIRCClient<SecureTCPTransport, StaticLoginCredentials>;
 
-// CALLBACK TYPES (Blocking, Non-Blocking)
+// CALLBACK TYPES (Blocking, Non-Blocking) [Function Pointers]
 pub type Callback = fn(u8, PrivmsgMessage) -> anyhow::Result<String>;
 //pub type Callback_a = Box<dyn Fn(u8, PrivmsgMessage) -> Pin<Box<dyn Future<Output = anyhow::Result<String>>>> + 'static + Send + Sync,>;
 
@@ -90,10 +94,17 @@ impl EventHandler
                 let res = match &name[..]
                 {
                     "speedgame" => query_srl(runtype, msg.clone()).await.unwrap(),
+                    "pic" => query_safebooru(runtype, msg.clone()).await.unwrap(),
                     _ => return Ok(()),
                 };
                 let dt_fmt = chrono::offset::Local::now().format("%H:%M:%S").to_string();
-                println!("[{}] #{} <{}>: {}", dt_fmt, msg.channel_login, self.bot_nick, res);
+                const color_flag: bool = true;
+                match color_flag
+                {
+                    true => println!("[{}] #{} <{}>: {}", dt_fmt.truecolor(138, 138, 138), msg.channel_login.truecolor(117, 97, 158), self.bot_nick.red(), res),
+                    false => println!("[{}] #{} <{}>: {}", dt_fmt, msg.channel_login, self.bot_nick, res),
+                }
+                if &res == ""{return Ok(());} // if we have nothing to send skip the send
                 client.say(
                         msg.channel_login.clone(),
                 format!("{}", res)
@@ -104,7 +115,13 @@ impl EventHandler
                 let out = self.command_map.get(&name).expect("Could not execute function pointer!");
                 let res = String::from(out(runtype, msg.clone()).unwrap());
                 let dt_fmt = chrono::offset::Local::now().format("%H:%M:%S").to_string();
-                println!("[{}] #{} <{}>: {}", dt_fmt, msg.channel_login, self.bot_nick, res);
+                const color_flag: bool = true;
+                match color_flag
+                {
+                    true => println!("[{}] #{} <{}>: {}", dt_fmt.truecolor(138, 138, 138), msg.channel_login.truecolor(117, 97, 158), self.bot_nick.red(), res),
+                    false => println!("[{}] #{} <{}>: {}", dt_fmt, msg.channel_login, self.bot_nick, res),
+                }
+                if &res == ""{return Ok(());} // if we have nothing to send skip the send
                 client.say(
                         msg.channel_login.clone(),
                 format!("{}", res)
@@ -166,55 +183,6 @@ pub async fn test_command(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Resul
         _ => {Ok(String::from(""))},
     }
 }
-
-/*
-pub fn test_command(runtype: u8, msg_ctx: PrivmsgMessage) -> String
-{
-    match runtype
-    {
-        b'!' =>
-        {
-            return String::from("Test Command Block");
-        },
-        b'?' =>
-        {
-            return String::from("Test Help Block");
-        },
-        b'#' =>
-        {
-            return String::from("Test Hash Block");
-        },
-        b'~' =>
-        {
-            return String::from("Test Tilde Block");
-        },
-        _ => {return String::from("");},
-    }
-}
-
-// TODO: Stop being an idiot, learn how to parse well in this damn language
-pub fn test_args(runtype: u8, msg_ctx: PrivmsgMessage) -> String
-{
-    print!("Executing\n");
-    let text = msg_ctx.message_text.as_str(); // get str from msg context
-    let (name, args_start) = match text.split_once(' ')
-    {
-        Some((name, args_start)) => (name, args_start),
-        None => (text, ""),
-    };
-    //let args = text[args_start..];
-    println!("{}", args_start);
-    match runtype
-    {
-        b'!' =>
-        {
-            return format!("{}", String::from(args_start));
-        },
-        _ => {return String::from("Uh oh");},
-    }
-}*/
-
-// Preliminary implementation of dreamboumtweet (will eventually change)
 
 pub fn dreamboumtweet(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>//Option<String>//(String, String)
 {
@@ -505,7 +473,7 @@ macro_rules! generate_simple_command
         }
     };
 }
-generate_simple_command!(cmds, "Current Commands: dreamboumtweet, demongacha, savedemon, hornedanimegacha, speedgame, melty, lumina, melee, soku, bbcf, ggxxacplusr, akb, vsav, jojos, millions, me, help, cmds, repo");
+generate_simple_command!(cmds, "Current Commands: dreamboumtweet, demongacha, savedemon, hornedanimegacha, speedgame, pic, melty, lumina, melee, soku, bbcf, ggxxacplusr, akb, vsav, jojos, millions, me, help, cmds, repo");
 generate_simple_command!(help, "Blueayachan version 2 supports multiple different \"runtype\" characters : \'!\' is supposed to produce similar functionality to the previous bot. \'?\' should give information and help regarding that command. \'#\' does the standard command with different functionality that is specific to the command itself. for a list of commands type !cmds");
 generate_simple_command!(poll, "THERE'S STILL TIME TO VOTE IN THE POLL! http://bombch.us/DYOt CirnoGenius");
 generate_simple_command!(repo, "You can find the githup repository here: https://github.com/electra13x7777/blueayachan_v2");
@@ -521,10 +489,6 @@ pub fn async_placeholder(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result
     Ok(String::from("A Placeholder function"))
 }
 
-// REPRESENTATION OF QUERIED DATA FROM SRL
-/*"{\"data\":[{\"gameName\":\"The Great Waldo Search (NES)\",\"gameAbbr
-ev\":\"waldosearchnes\",\"gamePopularity\":0.000000,\"isSeasonGame\":false}]
-,\"totalPages\":6576,\"pageNumber\":917,\"pageSize\":1}"*/
 async fn query_srl(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
 {
     match runtype
@@ -532,39 +496,72 @@ async fn query_srl(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<Strin
         b'!' =>
         {
             use rand::Rng;
-            let page_num: i32 = rand::thread_rng().gen_range(1..=6576).try_into().unwrap();//100;
+            let page_num: i32 = rand::thread_rng().gen_range(1..=6576).try_into().unwrap();
             let req_str = format!("https://www.speedrunslive.com/api/games?pageNumber={}&pageSize=1", page_num);
-            let data = reqwest::get(req_str)
-            .await?
-            .text()
-            .await?;
-            use serde_json::{Result, Value};
+            let data = reqwest::get(req_str).await?.text().await?;
             let mut results: HashMap<String, Value> = serde_json::from_str(&data).unwrap();
-            //print_type_of(&results["data"][0]["gameName"]);
             let mut game: String = format!("{}", &results["data"][0]["gameName"]);
-            //game.replace("\"", "");
             return Ok(format!("{} your new speedgame is {}!", msg_ctx.sender.name, game.replace("\"", "")));
         },
         b'?' =>
         {
-            Ok(format!("This command queries a random speedgame using SRL\'s API."))
+            Ok(format!("This command queries a random speedgame using SRL\'s API. TOTAL_GAMES: 6576"))
         },
         b'#' =>
         {
             use rand::Rng;
-            let page_num: i32 = rand::thread_rng().gen_range(1..=6576).try_into().unwrap();//100;
+            let page_num: i32 = rand::thread_rng().gen_range(1..=6576).try_into().unwrap();
             let req_str = format!("https://www.speedrunslive.com/api/games?pageNumber={}&pageSize=1", page_num);
-            let data = reqwest::get(req_str)
-            .await?
-            .text()
-            .await?;
-            use serde_json::{Result, Value};
+            let data = reqwest::get(req_str).await?.text().await?; // GET JaSON from
             let mut results: HashMap<String, Value> = serde_json::from_str(&data).unwrap();
             let mut game: String = format!("{}", &results["data"][0]["gameName"]);
             let mut pop: String = format!("{}", &results["data"][0]["gamePopularity"]);
-            //game.replace("\"", "");
-            //pop.replace("\"", "");
             return Ok(format!("{} your new speedgame is {}! Its popularity rating on SRL is {} TenshiWow o O ( Wow so popular! ) ", msg_ctx.sender.name, game.replace("\"", ""), pop.replace("\"", "")));
+        },
+        _ => Ok(String::from("")),
+    }
+}
+
+
+#[derive(Debug, Deserialize)]
+pub struct SafebooruPost
+{
+    file_url: String,
+}
+#[derive(Debug, Deserialize)]
+pub struct SafebooruPosts
+{
+    post: Vec<SafebooruPost>,
+}
+
+async fn query_safebooru(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+{
+    match runtype
+    {
+        b'!' =>
+        {
+            let text = msg_ctx.message_text.as_str(); // get str from msg context
+            let (name, args) = match text.split_once(' ')
+            {
+                Some((name, args)) => (name, args),
+                None => (text, ""),
+            };
+            // should we ever want to refactor to have whitespace split the 2 tag arguments
+            //args.split_whitespace().collect::<Vec<_>>().join("+")
+            let req_str = format!("https://safebooru.org/index.php?page=dapi&s=post&q=index&tags={}", &args);
+            let data = reqwest::get(req_str).await?.text().await?;
+
+            let posts: SafebooruPosts = match serde_xml_rs::from_str(&data)
+            {
+                Ok(posts) => posts,
+                _ => return Ok(format!("No results found for given arguments: {}", &args)),
+            };
+            let index: usize = rand::thread_rng().gen_range(0..posts.post.len());
+            Ok(posts.post[index].file_url.to_owned())
+        },
+        b'?' =>
+        {
+            Ok(format!("This command queries an image from Safebooru. Use '*' to autocomplete a tag and '+' to add an additional tag(s) to query with. | USAGE: !pic, !pic TAG, !pic TAG1+TAG2, !pic TAG1+...+TAGn | !pic shadow_h*from_*world+j*garland -> TAG1 = shadow_hearts_from_the_new_world, TAG2 = johnny_garland"))
         },
         _ => Ok(String::from("")),
     }

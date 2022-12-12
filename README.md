@@ -19,12 +19,7 @@
 * HornedAnimeGacha is back!
 * All classic fightgame main commands are back!
 * An all new way to get your next speedgame from SRL!
-### DB
-* Blueayachan User table
-* Roles table
-* Dreamboumtweets table
-* Demons table
-* pretty much most of the DBs are up at this point but there are a few substantial ones to work on still...
+* Pic command is back and better than before! (now supports multiple search tags)
 
 ## General Usage
 ### Runtypes (A new feature in Version 2!!!)

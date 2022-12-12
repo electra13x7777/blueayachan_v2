@@ -21,9 +21,16 @@ use chrono::
 use twitch_irc::
 {
     login::StaticLoginCredentials,
-    message::{PrivmsgMessage, ServerMessage},
+    message::
+    {
+        PrivmsgMessage,
+        ServerMessage,
+        RGBColor,
+    },
     ClientConfig, SecureTCPTransport, TwitchIRCClient,
 };
+use colored::*;
+
 pub mod commands;
 use crate::commands::
 {
@@ -96,6 +103,7 @@ async fn main() -> anyhow::Result<()>
     handler.add_command(String::from("repo"), commands::repo);
     // NON BLOCKING
     handler.add_command(String::from("speedgame"), commands::async_placeholder);
+    handler.add_command(String::from("pic"), commands::async_placeholder);
 
     let config =
     ClientConfig::new_simple(StaticLoginCredentials::new(bot_username.clone(), Some(oauth_token)));
@@ -109,7 +117,34 @@ async fn main() -> anyhow::Result<()>
             if let ServerMessage::Privmsg(msg) = message
             {
                 let dt_fmt = chrono::offset::Local::now().format("%H:%M:%S").to_string();
-                println!("[{}] #{} <{}>: {}", dt_fmt, msg.channel_login, &msg.sender.name, msg.message_text);
+                const color_flag: bool = true;
+                match color_flag
+                {
+                    true =>
+                    {
+                        //msg.name_color.map(|g| g.g).unwrap_or(0)
+                        let r: &u8 = match &msg.name_color.as_ref()
+                        {
+                            Some(r) => &msg.name_color.as_ref().unwrap().r,
+                            None => &0,
+                        };
+                        let g: &u8 = match &msg.name_color.as_ref()
+                        {
+                            Some(g) => &msg.name_color.as_ref().unwrap().g,
+                            None => &0
+                        };
+                        let b: &u8 = match &msg.name_color.as_ref()
+                        {
+                            Some(b) => &msg.name_color.as_ref().unwrap().b,
+                            None => &0
+                        };
+
+                        println!("[{}] #{} <{}>: {}", dt_fmt.truecolor(138, 138, 138), msg.channel_login.truecolor(117, 97, 158), &msg.sender.name.truecolor(*r, *g, *b), msg.message_text)
+                    },
+                    false => println!("[{}] #{} <{}>: {}", dt_fmt, msg.channel_login, &msg.sender.name, msg.message_text),
+                    _ => panic!(),
+                }
+                //println!("[{}] #{} <{}>: {}", dt_fmt.cyan(), msg.channel_login.truecolor(37, 81, 161), &msg.sender.name.green(), msg.message_text.truecolor(277, 168, 85));
                 handle_priv(clone.clone(), bot_username.clone(), msg, &handler).await;
             }
         }
