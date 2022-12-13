@@ -30,6 +30,9 @@
 * type `!help` to get a description of how the bot can be used.
 * type `!cmds` to get a list of supported commands.
 
+## Output
+![CLI_output](https://i.imgur.com/NzXyqrf.png)
+
 ### More to come soon!
 [Blueayachan Version 1](https://github.com/electra13x7777/blueayachan)
 #### Date Last Updated: 12/12/2022
