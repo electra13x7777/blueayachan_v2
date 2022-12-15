@@ -85,6 +85,8 @@ async fn main() -> anyhow::Result<()>
     handler.add_command(String::from("demongacha"), commands::demongacha);
     handler.add_command(String::from("savedemon"), commands::savedemon);
     handler.add_command(String::from("hornedanimegacha"), commands::hornedanimegacha);
+    handler.add_command(String::from("kinohackers"), commands::kinohackers);
+    // Fightgame Gachas
     handler.add_command(String::from("melty"), commands::melty);
     handler.add_command(String::from("lumina"), commands::lumina);
     handler.add_command(String::from("melee"), commands::melee);
@@ -97,6 +99,8 @@ async fn main() -> anyhow::Result<()>
     handler.add_command(String::from("millions"), commands::millions);
 
     handler.add_command(String::from("pick"), commands::pick);
+    handler.add_command(String::from("range"), commands::range);
+    handler.add_command(String::from("hentai"), commands::is_hentai);
 
     handler.add_command(String::from("me"), commands::me);
     handler.add_command(String::from("help"), commands::help);
@@ -119,8 +123,8 @@ async fn main() -> anyhow::Result<()>
             if let ServerMessage::Privmsg(msg) = message
             {
                 let dt_fmt = chrono::offset::Local::now().format("%H:%M:%S").to_string();
-                const color_flag: bool = true;
-                match color_flag
+                const COLOR_FLAG: bool = true;
+                match COLOR_FLAG
                 {
                     true =>
                     {

@@ -51,6 +51,8 @@ pub struct EventHandler
 impl EventHandler
 {
     // Thank you Azuchang!
+    // Callback returns a dynamic future
+    // Future yields a Result that can be unwrapped into a String
     pub fn add_command<Cb, F>(&mut self, name: String, function: Cb)
     where
     Cb: Fn(u8, PrivmsgMessage) -> F + 'static + Send + Sync,
@@ -81,17 +83,16 @@ impl EventHandler
             handle_bac_user_in_db(msg.sender.name.clone()); // Updates user database
             const COMMAND_INDEX: usize = 0;
             let runtype: u8 = msg.message_text.clone().as_bytes()[COMMAND_INDEX]; // gets a byte literal (Ex. b'!')
-            // TODO: Make this a special case for non blocking commands
-            let out = self.command_map.get(&name).expect("Could not execute function pointer!");
-            let res = String::from(out(runtype, msg.clone()).await.unwrap());
+            let callback = self.command_map.get(&name).expect("Could not execute function pointer!");
+            let res = String::from(callback(runtype, msg.clone()).await.unwrap());
+            if &res == ""{return Ok(());} // if we have nothing to send skip the send
             let dt_fmt = chrono::offset::Local::now().format("%H:%M:%S").to_string();
-            const color_flag: bool = true;
-            match color_flag
+            const COLOR_FLAG: bool = true;
+            match COLOR_FLAG
             {
                 true => println!("[{}] #{} <{}>: {}", dt_fmt.truecolor(138, 138, 138), msg.channel_login.truecolor(117, 97, 158), self.bot_nick.red(), res),
                 false => println!("[{}] #{} <{}>: {}", dt_fmt, msg.channel_login, self.bot_nick, res),
             }
-            if &res == ""{return Ok(());} // if we have nothing to send skip the send
             client.say(msg.channel_login.clone(), format!("{}", res)).await?;
         }
         Ok(())
@@ -332,34 +333,6 @@ pub async fn hornedanimegacha(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::R
     }
 }
 
-pub async fn me(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
-{
-    let user_data: BACUser = query_user_data(msg_ctx.sender.name.to_lowercase());
-    match runtype
-    {
-        b'!' =>
-        {
-            return Ok(format!("| Nick: {} | Commands: {} | Date Added: {} |", msg_ctx.sender.name, user_data.num_commands, user_data.date_added));
-        },
-        b'?' =>
-        {
-            return Ok(format!("This command returns information based on your usage of the bot."));
-        },
-        b'#' =>
-        {
-            if user_data.num_commands == 1
-            {
-                return Ok(format!("{} has used {} command!", msg_ctx.sender.name, user_data.num_commands));
-            }
-            else
-            {
-                return Ok(format!("{} has used commands {} times!", msg_ctx.sender.name, user_data.num_commands));
-            }
-        },
-        _ => {Ok(String::from(""))},
-    }
-}
-
 pub async fn melty(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
 {
     match runtype
@@ -381,6 +354,24 @@ pub async fn melty(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<Strin
         b'?' =>
         {
             return Ok(format!("This command gives you a brand new main for Melty Blood: Actress Again"));
+        },
+        _ => {Ok(String::from(""))},
+    }
+}
+
+pub async fn kinohackers(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+{
+    match runtype
+    {
+        b'!' =>
+        {
+            let id: i32 = rand::thread_rng().gen_range(1..=get_kinohack_count()).try_into().unwrap();
+            let queried_link: String = query_kinohackers(id);
+            return Ok(format!("{}", queried_link));
+        },
+        b'?' =>
+        {
+            return Ok(format!("This command gives you a brand kinohackers meme made by various members of the Claude influencer circle"));
         },
         _ => {Ok(String::from(""))},
     }
@@ -439,11 +430,84 @@ macro_rules! generate_simple_command
         }
     };
 }
-generate_simple_command!(cmds, "Current Commands: dreamboumtweet, demongacha, savedemon, hornedanimegacha, speedgame, pic, pick, melty, lumina, melee, soku, bbcf, ggxxacplusr, akb, vsav, jojos, millions, me, help, cmds, repo");
-generate_simple_command!(help, "Blueayachan version 2 supports multiple different \"runtype\" characters : \'!\' is supposed to produce similar functionality to the previous bot. \'?\' should give information and help regarding that command. \'#\' does the standard command with different functionality that is specific to the command itself. for a list of commands type !cmds");
+generate_simple_command!(cmds, "Current Commands: dreamboumtweet, demongacha, savedemon, hornedanimegacha, speedgame, pic, pick, range, hentai, kinohackers, melty, lumina, melee, soku, bbcf, ggxxacplusr, akb, vsav, jojos, millions, me, help, cmds, repo");
+generate_simple_command!(help, "Blueayachan version 2 supports multiple different \"runtype\" characters : \'!\' is supposed to produce similar functionality to the previous bot. \'?\' should give information and help regarding that command. \'#\' does the standard command with different functionality that is specific to the command itself. For a list of commands type !cmds");
 generate_simple_command!(poll, "THERE'S STILL TIME TO VOTE IN THE POLL! http://bombch.us/DYOt CirnoGenius");
 generate_simple_command!(repo, "You can find the githup repository here: https://github.com/electra13x7777/blueayachan_v2");
 
+
+///////////////////////////////////////////////////////////////////////////////
+//                    AUX CHAT HELP COMMAND IMPLEMENTATIONS                  //
+///////////////////////////////////////////////////////////////////////////////
+
+pub async fn me(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+{
+    let user_data: BACUser = query_user_data(msg_ctx.sender.name.to_lowercase());
+    match runtype
+    {
+        b'!' =>
+        {
+            return Ok(format!("| Nick: {} | Commands: {} | Date Added: {} |", msg_ctx.sender.name, user_data.num_commands, user_data.date_added));
+        },
+        b'?' =>
+        {
+            return Ok(format!("This command returns information based on your usage of the bot."));
+        },
+        b'#' =>
+        {
+            if user_data.num_commands == 1
+            {
+                return Ok(format!("{} has used {} command!", msg_ctx.sender.name, user_data.num_commands));
+            }
+            else
+            {
+                return Ok(format!("{} has used commands {} times!", msg_ctx.sender.name, user_data.num_commands));
+            }
+        },
+        _ => {Ok(String::from(""))},
+    }
+}
+
+pub async fn range(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+{
+    fn arg_is_int(s: &String) -> bool
+    {
+        for c in s.chars()
+        {
+            if !c.is_numeric() && c != '-'
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+    match runtype
+    {
+        b'!' =>
+        {
+            let text = msg_ctx.message_text.as_str();
+            let (name, args) = match text.split_once(' ')
+            {
+                Some((name, args)) => (name, args),
+                None => (text, ""),
+            };
+
+            let argv_s: Vec<String> = args.split(' ').map(|s| s.to_string()).collect();
+            //let mut argv: Vec<i32> = args.split(' ').map(|i| i.parse::<i32>().unwrap()).collect(); // TODO: THIS IS UNSANITIZED FIX THAT
+            if argv_s.len() != 2{return Ok(format!("Bad argument count! Please make sure your command follows this syntax: !range INT1 INT2"));}
+            if !arg_is_int(&argv_s[0]) || !arg_is_int(&argv_s[1]){return Ok(format!("Bad argument found! Please make sure you are providing INTEGERS as arguments. Ex) 1000, -500, 69, -420"));}
+            let mut argv: Vec<i32> = vec![argv_s[0].parse::<i32>().unwrap(), argv_s[1].parse::<i32>().unwrap()];
+            if argv[0] > argv[1]{argv.swap(0, 1);}
+            let rand_int: i32 = rand::thread_rng().gen_range(argv[0]..=argv[1]);
+            Ok(format!("{} your new integer value is {}!", msg_ctx.sender.name, rand_int))
+        },
+        b'?' =>
+        {
+            Ok(format!("This command picks a random 32 bit integer in a given range. Use whitespace to separate the numbers. | USAGE: !range INT1 INT2 | !range INT2 INT1 -> swaps larger and smaller to make it easy to use. NOTE: Range command is INCLUSIVE of the upperbound"))
+        },
+        _ => Ok(String::from("")),
+    }
+}
 
 pub async fn pick(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
 {
@@ -472,8 +536,27 @@ pub async fn pick(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String
     }
 }
 
+pub async fn is_hentai(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+{
+    match runtype
+    {
+        b'!' =>
+        {
+            let out: Vec<&str> = vec!("This game is hentai DataSweat", "This game is NOT hentai YoumuAngry", "This game could possibly be hentai, but more testing is needed MarisaFace");
+            let index: usize = rand::thread_rng().gen_range(0..out.len());
+            Ok(format!("{}", out[index]))
+
+        },
+        b'?' =>
+        {
+            Ok(format!("This command lets the bot decide if any content on the stream contains hentai. NOTE: The author of this command does not guarentee its reliability..."))
+        },
+        _ => Ok(String::from("")),
+    }
+}
+
 ///////////////////////////////////////////////////////////////////////////////
-//                     NON-BLOCKING COMMAND IMPLEMENTATIONS                  //
+//                     EXTERNAL API COMMAND IMPLEMENTATIONS                  //
 ///////////////////////////////////////////////////////////////////////////////
 
 // Comamand: !speedgame
@@ -505,8 +588,16 @@ pub async fn query_srl(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<S
             let data = reqwest::get(req_str).await?.text().await?; // GET JaSON from
             let mut results: HashMap<String, Value> = serde_json::from_str(&data).unwrap();
             let mut game: String = format!("{}", &results["data"][0]["gameName"]);
-            let mut pop: String = format!("{}", &results["data"][0]["gamePopularity"]);
-            return Ok(format!("{} your new speedgame is {}! Its popularity rating on SRL is {} TenshiWow o O ( Wow so popular! ) ", msg_ctx.sender.name, game.replace("\"", ""), pop.replace("\"", "")));
+            let mut pop_string: String = format!("{}", &results["data"][0]["gamePopularity"]);
+            pop_string = pop_string.replace("\"", "");
+            let pop: f32 = pop_string.parse::<f32>().unwrap();
+            let tenshi_quote: &str =
+            if pop == 0.0{"Wow... no one plays this sh*t..."}
+            else if pop < 20.0{"Holy cow someone has played this game!"}
+            else if pop >= 20.0{"Wow so popular!"}
+            else if pop >= 100.0{"Wow so popular!"}
+            else{"Wow... no one plays this sh*t..."};
+            return Ok(format!("{} your new speedgame is {}! Its popularity rating on SRL is {} TenshiWow o O ( {} ) ", msg_ctx.sender.name, game.replace("\"", ""), pop, tenshi_quote));
         },
         _ => Ok(String::from("")),
     }
@@ -553,7 +644,7 @@ pub async fn query_safebooru(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Re
         },
         b'?' =>
         {
-            Ok(format!("This command queries an image from Safebooru. Use '*' to autocomplete a tag, a '+' to add an additional tag(s) to query with, or '-' to omit a tag from the search. | USAGE: !pic, !pic TAG, !pic TAG1+TAG2, !pic TAG1+...+TAGn, !pic TAG1+-TAG2 | !pic shadow_h*from_*world+j*garland -> TAG1 = shadow_hearts_from_the_new_world, TAG2 = johnny_garland"))
+            Ok(format!("This command queries an image from Safebooru. Use '*' to autocomplete a tag, a '+' to add an additional tag(s) to query with, or '-' to omit a tag from the search. | USAGE: !pic, !pic TAG, !pic TAG1+TAG2, !pic TAG1+...+TAGn, !pic TAG1+TAG2+-TAG3 | !pic shadow_h*from_*world+j*garland -> TAG1 = shadow_hearts_from_the_new_world, TAG2 = johnny_garland"))
         },
         _ => Ok(String::from("")),
     }

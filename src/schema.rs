@@ -73,6 +73,13 @@ diesel::table! {
 }
 
 diesel::table! {
+    kinohackers (id) {
+        id -> Int4,
+        name -> Varchar,
+    }
+}
+
+diesel::table! {
     luminas (id) {
         id -> Int4,
         name -> Varchar,
@@ -144,6 +151,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     ggxxacplusrs,
     hornedanimes,
     jojos,
+    kinohackers,
     luminas,
     melees,
     meltys,
