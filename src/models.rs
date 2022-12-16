@@ -145,6 +145,22 @@ pub struct SavedNDemon
     pub last_demon_rarity: i32,
 }
 
+#[derive(Insertable)]
+#[diesel(table_name = pictimeout)]
+pub struct NewPicTimeout<'a>
+{
+    pub user_id: &'a i32, // foreign_key from blueayachanuser
+    pub last_pic: &'a NaiveDateTime,
+}
+
+#[derive(Queryable, Selectable)]
+#[diesel(table_name = pictimeout)]
+pub struct PicTimeout
+{
+    pub id: i32,
+    pub user_id: i32,
+    pub last_pic: NaiveDateTime,
+}
 
 
 // GENERATE DB ENDPOINTS

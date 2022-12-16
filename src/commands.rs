@@ -20,7 +20,7 @@ use std::
     pin::Pin,
 };
 use rand::Rng;
-//use chrono;
+use chrono::NaiveDateTime;
 use twitch_irc::
 {
     login::StaticLoginCredentials,
@@ -147,7 +147,7 @@ pub async fn test_command(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Resul
         {
             return Ok(String::from("Test Tilde Block"));
         },
-        _ => {Ok(String::from(""))},
+        _ => Ok(String::from("")),
     }
 }
 
@@ -355,7 +355,7 @@ pub async fn melty(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<Strin
         {
             return Ok(format!("This command gives you a brand new main for Melty Blood: Actress Again"));
         },
-        _ => {Ok(String::from(""))},
+        _ => Ok(String::from("")),
     }
 }
 
@@ -373,9 +373,26 @@ pub async fn kinohackers(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result
         {
             return Ok(format!("This command gives you a brand kinohackers meme made by various members of the Claude influencer circle"));
         },
-        _ => {Ok(String::from(""))},
+        _ => Ok(String::from("")),
     }
 }
+// refactor into a commands/misc dir
+pub async fn shftnw(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+{
+    match runtype
+    {
+        b'!' =>
+        {
+            return Ok(format!("{} loves Shadow Hearts: From the New World!", msg_ctx.sender.name));
+        },
+        b'?' =>
+        {
+            return Ok(format!(""));
+        },
+        _ => Ok(String::from("")),
+    }
+}
+
 
 // SIMPLE GACHA COMMANDS
 macro_rules! generate_simple_gacha
@@ -396,7 +413,7 @@ macro_rules! generate_simple_gacha
                 {
                     return Ok(format!("This command gives you a brand new main for {}", $game_name));
                 },
-                _ => {Ok(String::from(""))},
+                _ => Ok(String::from("")),
             }
         }
     };
@@ -425,7 +442,7 @@ macro_rules! generate_simple_command
                 {
                     return Ok(format!($text));
                 }
-                _ => {Ok(String::from(""))},
+                _ => Ok(String::from("")),
             }
         }
     };
@@ -433,7 +450,7 @@ macro_rules! generate_simple_command
 generate_simple_command!(cmds, "Current Commands: dreamboumtweet, demongacha, savedemon, hornedanimegacha, speedgame, pic, pick, range, hentai, kinohackers, melty, lumina, melee, soku, bbcf, ggxxacplusr, akb, vsav, jojos, millions, me, help, cmds, repo");
 generate_simple_command!(help, "Blueayachan version 2 supports multiple different \"runtype\" characters : \'!\' is supposed to produce similar functionality to the previous bot. \'?\' should give information and help regarding that command. \'#\' does the standard command with different functionality that is specific to the command itself. For a list of commands type !cmds");
 generate_simple_command!(poll, "THERE'S STILL TIME TO VOTE IN THE POLL! http://bombch.us/DYOt CirnoGenius");
-generate_simple_command!(repo, "You can find the githup repository here: https://github.com/electra13x7777/blueayachan_v2");
+generate_simple_command!(repo, "You can find the github repository here: https://github.com/electra13x7777/blueayachan_v2");
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -464,10 +481,11 @@ pub async fn me(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
                 return Ok(format!("{} has used commands {} times!", msg_ctx.sender.name, user_data.num_commands));
             }
         },
-        _ => {Ok(String::from(""))},
+        _ => Ok(String::from("")),
     }
 }
 
+// CURRENTLY DISABLED DUE TO INPUT VALIDATION BUGS
 pub async fn range(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
 {
     fn arg_is_int(s: &String) -> bool
@@ -493,17 +511,25 @@ pub async fn range(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<Strin
             };
 
             let argv_s: Vec<String> = args.split(' ').map(|s| s.to_string()).collect();
-            //let mut argv: Vec<i32> = args.split(' ').map(|i| i.parse::<i32>().unwrap()).collect(); // TODO: THIS IS UNSANITIZED FIX THAT
+            // check arg count
             if argv_s.len() != 2{return Ok(format!("Bad argument count! Please make sure your command follows this syntax: !range INT1 INT2"));}
+            // check input string length???
+            // check if int
             if !arg_is_int(&argv_s[0]) || !arg_is_int(&argv_s[1]){return Ok(format!("Bad argument found! Please make sure you are providing INTEGERS as arguments. Ex) 1000, -500, 69, -420"));}
-            let mut argv: Vec<i32> = vec![argv_s[0].parse::<i32>().unwrap(), argv_s[1].parse::<i32>().unwrap()];
+            let mut argv: Vec<i64> = vec![argv_s[0].parse::<i64>().unwrap(), argv_s[1].parse::<i64>().unwrap()];
+            /*
+            assert!(argv[0] <= i64::MAX);
+            assert!(argv[0] >= i64::MIN);
+            assert!(argv[1] <= i64::MAX);
+            assert!(argv[1] >= i64::MIN);
+            */
             if argv[0] > argv[1]{argv.swap(0, 1);}
-            let rand_int: i32 = rand::thread_rng().gen_range(argv[0]..=argv[1]);
+            let rand_int: i64 = rand::thread_rng().gen_range(argv[0]..=argv[1]);
             Ok(format!("{} your new integer value is {}!", msg_ctx.sender.name, rand_int))
         },
         b'?' =>
         {
-            Ok(format!("This command picks a random 32 bit integer in a given range. Use whitespace to separate the numbers. | USAGE: !range INT1 INT2 | !range INT2 INT1 -> swaps larger and smaller to make it easy to use. NOTE: Range command is INCLUSIVE of the upperbound"))
+            Ok(format!("This command picks a random 64 bit integer in a given range. Use whitespace to separate the numbers. | USAGE: !range INT1 INT2 | !range INT2 INT1 -> swaps larger and smaller to make it easy to use. NOTE: Range command is INCLUSIVE of the upperbound"))
         },
         _ => Ok(String::from("")),
     }
@@ -549,7 +575,7 @@ pub async fn is_hentai(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<S
         },
         b'?' =>
         {
-            Ok(format!("This command lets the bot decide if any content on the stream contains hentai. NOTE: The author of this command does not guarentee its reliability..."))
+            Ok(format!("This command lets the bot decide if any content on the stream contains hentai. NOTE: The author of this command does not guarantee its reliability..."))
         },
         _ => Ok(String::from("")),
     }
@@ -595,7 +621,7 @@ pub async fn query_srl(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<S
             if pop == 0.0{"Wow... no one plays this sh*t..."}
             else if pop < 20.0{"Holy cow someone has played this game!"}
             else if pop >= 20.0{"Wow so popular!"}
-            else if pop >= 100.0{"Wow so popular!"}
+            else if pop >= 100.0{"...insane popularity! CirnoGenius 🤝 SomaCruzFromAriaOfSorrow"}
             else{"Wow... no one plays this sh*t..."};
             return Ok(format!("{} your new speedgame is {}! Its popularity rating on SRL is {} TenshiWow o O ( {} ) ", msg_ctx.sender.name, game.replace("\"", ""), pop, tenshi_quote));
         },
@@ -620,6 +646,7 @@ pub struct SafebooruPosts
 //
 pub async fn query_safebooru(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
 {
+    const TIMEOUT_DIFF: i64 = 30;
     match runtype
     {
         b'!' =>
@@ -630,8 +657,6 @@ pub async fn query_safebooru(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Re
                 Some((name, args)) => (name, args),
                 None => (text, ""),
             };
-            // should we ever want to refactor to have whitespace split the 2 tag arguments
-            //args.split_whitespace().collect::<Vec<_>>().join("+")
             let req_str = format!("https://safebooru.org/index.php?page=dapi&s=post&q=index&rating=g&tags={}+-rating:questionable", &args.to_lowercase());
             let data = reqwest::get(req_str).await?.text().await?;
             let posts: SafebooruPosts = match serde_xml_rs::from_str(&data)
@@ -639,6 +664,14 @@ pub async fn query_safebooru(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Re
                 Ok(posts) => posts,
                 _ => return Ok(format!("No results found for given arguments: {} https://imgur.com/a/vQsv7Rj", &args)),
             };
+            // handle timeout when we know we have queried an image
+            let ndt_now: NaiveDateTime = chrono::offset::Local::now().naive_local();
+            let bacuser: BACUser = query_user_data(msg_ctx.sender.name.to_lowercase());
+            let timeout_out: (bool, i64) = handle_pic_timeout(bacuser, ndt_now, TIMEOUT_DIFF);
+            if !timeout_out.0
+            {
+                return Ok(format!("{}, please wait for {} more second(s)", msg_ctx.sender.name, TIMEOUT_DIFF - timeout_out.1))
+            }
             let index: usize = rand::thread_rng().gen_range(0..posts.post.len());
             Ok(posts.post[index].file_url.to_owned())
         },

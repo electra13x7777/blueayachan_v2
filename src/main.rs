@@ -99,7 +99,7 @@ async fn main() -> anyhow::Result<()>
     handler.add_command(String::from("millions"), commands::millions);
 
     handler.add_command(String::from("pick"), commands::pick);
-    handler.add_command(String::from("range"), commands::range);
+    //handler.add_command(String::from("range"), commands::range);
     handler.add_command(String::from("hentai"), commands::is_hentai);
 
     handler.add_command(String::from("me"), commands::me);
@@ -107,6 +107,8 @@ async fn main() -> anyhow::Result<()>
     handler.add_command(String::from("cmds"), commands::cmds);
     handler.add_command(String::from("poll"), commands::poll);
     handler.add_command(String::from("repo"), commands::repo);
+    handler.add_command(String::from("iloveshadowhearts:fromthenewworld"), commands::shftnw);
+
     // EXTERNAL GET REQUESTS
     handler.add_command(String::from("speedgame"), commands::query_srl);
     handler.add_command(String::from("pic"), commands::query_safebooru);
@@ -132,17 +134,17 @@ async fn main() -> anyhow::Result<()>
                         //msg.name_color.map(|g| g.g).unwrap_or(0)
                         let r: &u8 = match &msg.name_color.as_ref()
                         {
-                            Some(r) => &msg.name_color.as_ref().unwrap().r,
+                            Some(r) => &r.r,
                             None => &0,
                         };
                         let g: &u8 = match &msg.name_color.as_ref()
                         {
-                            Some(g) => &msg.name_color.as_ref().unwrap().g,
+                            Some(g) => &g.g,
                             None => &0
                         };
                         let b: &u8 = match &msg.name_color.as_ref()
                         {
-                            Some(b) => &msg.name_color.as_ref().unwrap().b,
+                            Some(b) => &b.b,
                             None => &0
                         };
 

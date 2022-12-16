@@ -19,7 +19,7 @@
 * HornedAnimeGacha is back!
 * All classic fightgame main commands are back!
 * An all new way to get your next speedgame from SRL!
-* Pic command is back and better than before! (now supports multiple search tags)
+* Pic command is back and better than before! (now supports multiple search tags) NOTE: 30s timeout between successful pic command per user
 
 ## General Usage
 ### Runtypes (A new feature in Version 2!!!)

@@ -116,6 +116,14 @@ diesel::table! {
 }
 
 diesel::table! {
+    pictimeout (id) {
+        id -> Int4,
+        user_id -> Int4,
+        last_pic -> Timestamp,
+    }
+}
+
+diesel::table! {
     roles (id) {
         id -> Int4,
         role_name -> Varchar,
@@ -140,6 +148,7 @@ diesel::table! {
 diesel::joinable!(bac_user_demons -> blueayachanuser (user_id));
 diesel::joinable!(blueayachanuser_roles -> blueayachanuser (user_id));
 diesel::joinable!(blueayachanuser_roles -> roles (role_id));
+diesel::joinable!(pictimeout -> blueayachanuser (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     akbs,
@@ -157,6 +166,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     meltys,
     millions,
     nocturnedemons,
+    pictimeout,
     roles,
     sokus,
     vsavs,

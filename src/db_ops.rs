@@ -294,9 +294,69 @@ pub fn save_user_demon(bacuser: BACUser)
         diesel::update(bac_user_demons.filter(user_id.eq(&bacuser.id)))
                 .set(saved_demon_id.eq(&sud.last_demon_id))
         .execute(&mut connection).expect("Error updating saved demon ID");
-                diesel::update(bac_user_demons.filter(user_id.eq(&bacuser.id)))
+        diesel::update(bac_user_demons.filter(user_id.eq(&bacuser.id)))
                 .set(saved_demon_rarity.eq(&sud.last_demon_rarity))
                 .execute(&mut connection).expect("Error updating saved demon RARITY");
+    }
+}
+
+pub fn query_pic_timeout(bacuser: &BACUser) -> Option<PicTimeout>
+{
+    use crate::schema::pictimeout::dsl::*;
+    let mut connection: PgConnection = establish_connection();
+    let user_exists: bool = select(exists(pictimeout.filter(user_id.eq(&bacuser.id))))
+    .get_result(&mut connection).unwrap();
+
+    if !user_exists
+    {
+        // WE WILL DO NOTHING
+
+        return None;
+    }
+    else
+    {
+        let result = pictimeout.filter(user_id.eq(&bacuser.id)).first::<PicTimeout>(&mut connection).expect("Error finding user");
+        return Some(result);
+    }
+}
+
+pub fn handle_pic_timeout(bacuser: BACUser, ndt_now: NaiveDateTime, timeout: i64) -> (bool, i64)
+{
+    use crate::schema::pictimeout::dsl::*;
+    let mut connection: PgConnection = establish_connection();
+    let user_exists: bool = select(exists(pictimeout.filter(user_id.eq(&bacuser.id))))
+    .get_result(&mut connection).unwrap();
+    if !user_exists
+    {
+        // set user timeout defaults
+        let npt = NewPicTimeout
+        {
+            user_id: &bacuser.id, last_pic: &ndt_now
+        };
+        // insert
+        diesel::insert_into(pictimeout)
+        .values(&npt)
+        .execute(&mut connection)
+        .expect("Error inserting new user pic timeout");
+        return (true, 0);
+    }
+    else
+    {
+        
+        let pt = match query_pic_timeout(&bacuser)
+        {
+            Some(pt) => pt,
+            None => panic!()
+        };
+        let diff: i64 = ndt_now.signed_duration_since(pt.last_pic).num_seconds();
+        if diff >= timeout
+        {
+            diesel::update(pictimeout.filter(user_id.eq(&bacuser.id)))
+                .set(last_pic.eq(&ndt_now))
+                .execute(&mut connection).expect("Error updating last pic timestamp");
+            return (true, 0);
+        }
+        return (false, diff);
     }
 }
 
