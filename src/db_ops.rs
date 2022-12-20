@@ -335,9 +335,9 @@ pub fn handle_pic_timeout(bacuser: BACUser, ndt_now: NaiveDateTime, timeout: i64
         };
         // insert
         diesel::insert_into(pictimeout)
-        .values(&npt)
-        .execute(&mut connection)
-        .expect("Error inserting new user pic timeout");
+            .values(&npt)
+            .execute(&mut connection)
+            .expect("Error inserting new user pic timeout");
         return (true, 0);
     }
     else
@@ -346,7 +346,7 @@ pub fn handle_pic_timeout(bacuser: BACUser, ndt_now: NaiveDateTime, timeout: i64
         let pt = match query_pic_timeout(&bacuser)
         {
             Some(pt) => pt,
-            None => panic!()
+            None => panic!() // will never happen
         };
         let diff: i64 = ndt_now.signed_duration_since(pt.last_pic).num_seconds();
         if diff >= timeout

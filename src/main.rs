@@ -99,14 +99,16 @@ async fn main() -> anyhow::Result<()>
     handler.add_command(String::from("millions"), commands::millions);
 
     handler.add_command(String::from("pick"), commands::pick);
-    //handler.add_command(String::from("range"), commands::range);
+    handler.add_command(String::from("range"), commands::range);
     handler.add_command(String::from("hentai"), commands::is_hentai);
+    handler.add_command(String::from("cfb"), commands::cfb);
 
     handler.add_command(String::from("me"), commands::me);
     handler.add_command(String::from("help"), commands::help);
     handler.add_command(String::from("cmds"), commands::cmds);
     handler.add_command(String::from("poll"), commands::poll);
     handler.add_command(String::from("repo"), commands::repo);
+    handler.add_command(String::from("weekly"), commands::weekly);
     handler.add_command(String::from("iloveshadowhearts:fromthenewworld"), commands::shftnw);
 
     // EXTERNAL GET REQUESTS
