@@ -102,6 +102,7 @@ async fn main() -> anyhow::Result<()>
     handler.add_command(String::from("range"), commands::range);
     handler.add_command(String::from("hentai"), commands::is_hentai);
     handler.add_command(String::from("cfb"), commands::cfb);
+    handler.add_command(String::from("chen"), commands::chen);
 
     handler.add_command(String::from("me"), commands::me);
     handler.add_command(String::from("help"), commands::help);

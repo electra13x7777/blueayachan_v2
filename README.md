@@ -35,4 +35,4 @@
 
 ### More to come soon!
 [Blueayachan Version 1](https://github.com/electra13x7777/blueayachan)
-#### Date Last Updated: 12/14/2022
+#### Date Last Updated: 12/20/2022

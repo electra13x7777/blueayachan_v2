@@ -446,7 +446,7 @@ macro_rules! generate_simple_command
         }
     };
 }
-generate_simple_command!(cmds, "Current Commands: dreamboumtweet, demongacha, savedemon, hornedanimegacha, speedgame, pic, pick, range, hentai, kinohackers, melty, lumina, melee, soku, bbcf, ggxxacplusr, akb, vsav, jojos, millions, cfb, me, help, cmds, repo, weekly");
+generate_simple_command!(cmds, "Current Commands: dreamboumtweet, demongacha, savedemon, hornedanimegacha, chen, speedgame, pic, pick, range, hentai, kinohackers, melty, lumina, melee, soku, bbcf, ggxxacplusr, akb, vsav, jojos, millions, cfb, me, help, cmds, repo, weekly");
 generate_simple_command!(help, "Blueayachan version 2 supports multiple different \"runtype\" characters : \'!\' is supposed to produce similar functionality to the previous bot. \'?\' should give information and help regarding that command. \'#\' does the standard command with different functionality that is specific to the command itself. For a list of commands type !cmds");
 generate_simple_command!(poll, "THERE'S STILL TIME TO VOTE IN THE POLL! http://bombch.us/DYOt CirnoGenius");
 generate_simple_command!(repo, "You can find the github repository here: https://github.com/electra13x7777/blueayachan_v2");
@@ -464,8 +464,16 @@ pub async fn me(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
     {
         b'!' =>
         {
-            return Ok(format!("| Nick: {} | Commands: {} | Date Added: {} |", msg_ctx.sender.name, user_data.num_commands, user_data.date_added));
-        },
+            let ndt_now: NaiveDateTime = chrono::offset::Local::now().naive_local();
+            let days = ndt_now.signed_duration_since(user_data.date_added).num_days();
+            //return Ok(format!("| Nick: {} | Commands: {} | Date Added: {} |", msg_ctx.sender.name, user_data.num_commands, user_data.date_added));
+            match days
+            {
+                0 => return Ok(format!("{} became a user today! They have used {} commands.", msg_ctx.sender.name, user_data.num_commands)),
+                1 => return Ok(format!("{} has been a user for {} day. They have used {} commands.", msg_ctx.sender.name, days, user_data.num_commands)),
+                _ => return Ok(format!("{} has been a user for {} days. They have used {} commands.", msg_ctx.sender.name, days, user_data.num_commands))
+            }
+                    },
         b'?' =>
         {
             return Ok(format!("This command returns information based on your usage of the bot."));
@@ -599,6 +607,47 @@ pub async fn is_hentai(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<S
     }
 }
 
+pub async fn chen(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+{
+    match runtype
+    {
+        b'!' =>
+        {
+            let chen_str: String = match msg_ctx.channel_login.as_str() // will read from a database eventually
+            {
+                "claude" => String::from("HONKHONK"),
+                "darko_rta" => String::from("saHonk"),
+                "electra_rta" => String::from("saHonk"),
+                "crypton42" => String::from("saHonk"),
+                _ => String::from("")
+            };
+            if chen_str == ""{return Ok(String::from(""))}
+            let chens: usize = rand::thread_rng().gen_range(0..=10);
+            match chens
+            {
+                0 => return Ok(format!("{}... got 0 chens :(", msg_ctx.sender.name)),
+                1 => return Ok(format!("{} got {} chen. {}",  msg_ctx.sender.name, chens, chen_str)),
+                _ => chens
+            };
+            let mut new_chens: String = "".to_owned();
+            for i in 1..=chens
+            {
+                new_chens += &chen_str;
+                if i != chens
+                {
+                    new_chens += " ";
+                }
+            }
+            Ok(format!("{} got a {} chen combo! {}",  msg_ctx.sender.name, chens, new_chens))
+        },
+        b'?' =>
+        {
+            Ok(format!("This command gives you chens. Yay!"))
+        },
+        _ => Ok(String::from("")),
+    }
+}
+
 pub async fn cfb(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
 {
     match runtype
@@ -686,7 +735,13 @@ pub struct SafebooruPosts
 //
 pub async fn query_safebooru(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
 {
-    let has_timeout: bool = true;
+    const HAS_TIMEOUT: bool = true;
+    const CHANNEL_FILTER: bool = true;
+    const FILTERED: &'static [&'static str] = &["sioneus"]; // will read from a database eventually
+    if CHANNEL_FILTER && FILTERED.contains(&msg_ctx.channel_login.as_str())
+    {
+        return Ok(format!("This command is not available in {}\'s channel. Sorry {}", msg_ctx.channel_login, msg_ctx.sender.name));
+    }
     const TIMEOUT_DIFF: i64 = 30;
     match runtype
     {
@@ -706,7 +761,7 @@ pub async fn query_safebooru(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Re
                 _ => return Ok(format!("No results found for given arguments: {} https://imgur.com/a/vQsv7Rj", &args)),
             };
             // handle timeout when we know we have queried an image
-            if has_timeout
+            if HAS_TIMEOUT
             {
                 let ndt_now: NaiveDateTime = chrono::offset::Local::now().naive_local();
                 let bacuser: BACUser = query_user_data(msg_ctx.sender.name.to_lowercase());
