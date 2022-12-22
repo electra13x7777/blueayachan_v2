@@ -125,7 +125,8 @@ async fn main() -> anyhow::Result<()>
     {
         while let Some(message) = incoming_messages.recv().await
         {
-            if let ServerMessage::Privmsg(msg) = message
+            // TODO: FIX MALFORMED TAG ERROR PROC
+            if let Ok(ServerMessage::Privmsg(msg)) = ServerMessage::try_from(message)
             {
                 let dt_fmt = chrono::offset::Local::now().format("%H:%M:%S").to_string();
                 const COLOR_FLAG: bool = true;
@@ -156,7 +157,6 @@ async fn main() -> anyhow::Result<()>
                     false => println!("[{}] #{} <{}>: {}", dt_fmt, msg.channel_login, &msg.sender.name, msg.message_text),
                     _ => panic!(),
                 }
-                //println!("[{}] #{} <{}>: {}", dt_fmt.cyan(), msg.channel_login.truecolor(37, 81, 161), &msg.sender.name.green(), msg.message_text.truecolor(277, 168, 85));
                 handle_priv(clone.clone(), bot_username.clone(), msg, &handler).await;
             }
         }

@@ -80,6 +80,7 @@ impl EventHandler
     {
         if self.command_map.contains_key(&name)
         {
+            // TODO: check if command is allowed in channel
             handle_bac_user_in_db(msg.sender.name.clone()); // Updates user database
             const COMMAND_INDEX: usize = 0;
             let runtype: u8 = msg.message_text.clone().as_bytes()[COMMAND_INDEX]; // gets a byte literal (Ex. b'!')
@@ -469,9 +470,9 @@ pub async fn me(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
             //return Ok(format!("| Nick: {} | Commands: {} | Date Added: {} |", msg_ctx.sender.name, user_data.num_commands, user_data.date_added));
             match days
             {
-                0 => return Ok(format!("{} became a user today! They have used {} commands.", msg_ctx.sender.name, user_data.num_commands)),
-                1 => return Ok(format!("{} has been a user for {} day. They have used {} commands.", msg_ctx.sender.name, days, user_data.num_commands)),
-                _ => return Ok(format!("{} has been a user for {} days. They have used {} commands.", msg_ctx.sender.name, days, user_data.num_commands))
+                0 => return Ok(format!("{} became a BAC user today! They have used {} commands.", msg_ctx.sender.name, user_data.num_commands)),
+                1 => return Ok(format!("{} has been a BAC user for {} day. They have used {} commands.", msg_ctx.sender.name, days, user_data.num_commands)),
+                _ => return Ok(format!("{} has been a BAC user for {} days. They have used {} commands.", msg_ctx.sender.name, days, user_data.num_commands))
             }
                     },
         b'?' =>
@@ -613,6 +614,44 @@ pub async fn chen(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String
     {
         b'!' =>
         {
+            let mut chen_str: (String, String) = match msg_ctx.channel_login.as_str() // will read from a database eventually
+            {
+                "claude" => (String::from("HONKHONK"), String::from("CirnoGenius")),
+                "darko_rta" => (String::from("saHonk"), String::from("CirnoGenius")),
+                "electra_rta" => (String::from("saHonk"), String::from("CirnoGenius")),
+                "crypton42" => (String::from("saHonk"), String::from("saHonk")),
+                _ => (String::from(""), String::from(""))
+            };
+            if chen_str.0 == ""{return Ok(String::from(""))}
+            let chens: usize = rand::thread_rng().gen_range(0..=10);
+            match chens
+            {
+                0 => return Ok(format!("{}... got 0 chens :(", msg_ctx.sender.name)),
+                1 => return Ok(format!("{} got {} chen. {}",  msg_ctx.sender.name, chens, chen_str.0)),
+                _ => chens
+            };
+            let mut new_chens: String = "".to_owned();
+            for i in 1..=chens
+            {
+                match chens
+                {
+                    9 => new_chens += &chen_str.1,
+                    _ => new_chens += &chen_str.0
+                }
+
+                if i != chens
+                {
+                    new_chens += " ";
+                }
+            }
+            Ok(format!("{} got a {} chen combo! {}",  msg_ctx.sender.name, chens, new_chens))
+        },
+        b'?' =>
+        {
+            Ok(format!("This command gives you chens. Yay!"))
+        },
+        b'#' =>
+        {
             let chen_str: String = match msg_ctx.channel_login.as_str() // will read from a database eventually
             {
                 "claude" => String::from("HONKHONK"),
@@ -625,8 +664,8 @@ pub async fn chen(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String
             let chens: usize = rand::thread_rng().gen_range(0..=10);
             match chens
             {
-                0 => return Ok(format!("{}... got 0 chens :(", msg_ctx.sender.name)),
-                1 => return Ok(format!("{} got {} chen. {}",  msg_ctx.sender.name, chens, chen_str)),
+                0 => return Ok(format!("0 chens :(")),
+                1 => return Ok(format!("{}", chen_str)),
                 _ => chens
             };
             let mut new_chens: String = "".to_owned();
@@ -638,11 +677,7 @@ pub async fn chen(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String
                     new_chens += " ";
                 }
             }
-            Ok(format!("{} got a {} chen combo! {}",  msg_ctx.sender.name, chens, new_chens))
-        },
-        b'?' =>
-        {
-            Ok(format!("This command gives you chens. Yay!"))
+            Ok(format!("{}", new_chens))
         },
         _ => Ok(String::from("")),
     }
@@ -708,16 +743,15 @@ pub async fn query_srl(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<S
             let pop: f32 = pop_string.parse::<f32>().unwrap();
             let tenshi_quote: &str =
             if pop == 0.0{"Wow... no one plays this sh*t..."}
-            else if pop < 20.0{"Holy cow someone has played this game!"}
-            else if pop >= 20.0{"Wow so popular!"}
             else if pop >= 100.0{"...insane popularity! CirnoGenius 🤝 SomaCruzFromAriaOfSorrow"}
+            else if pop >= 20.0{"Wow so popular! DataFace b"}
+            else if pop < 20.0{"Holy cow someone has played this game!"}
             else{"Wow... no one plays this sh*t..."};
             return Ok(format!("{} your new speedgame is {}! Its popularity rating on SRL is {} TenshiWow o O ( {} ) ", msg_ctx.sender.name, game.replace("\"", ""), pop, tenshi_quote));
         },
         _ => Ok(String::from("")),
     }
 }
-
 
 #[derive(Debug, Deserialize)]
 pub struct SafebooruPost
@@ -737,10 +771,19 @@ pub async fn query_safebooru(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Re
 {
     const HAS_TIMEOUT: bool = true;
     const CHANNEL_FILTER: bool = true;
-    const FILTERED: &'static [&'static str] = &["sioneus"]; // will read from a database eventually
+    const FILTERED: &'static [&'static str] = &["sioneus", "cyghfer", "liquidsquid"]; // will read from a database eventually
+    const MOD_ONLY: &'static [&'static str] = &["mpghappiness"];
     if CHANNEL_FILTER && FILTERED.contains(&msg_ctx.channel_login.as_str())
     {
         return Ok(format!("This command is not available in {}\'s channel. Sorry {}", msg_ctx.channel_login, msg_ctx.sender.name));
+    }
+    if CHANNEL_FILTER && MOD_ONLY.contains(&msg_ctx.channel_login.as_str())
+    {
+        let badges: Vec<String> = msg_ctx.badges.iter().map(|b| b.name.clone()).collect();
+        if !badges.contains(&"moderator".to_string()) && !badges.contains(&"broadcaster".to_string())
+        {
+            return Ok(format!("This command is not available to non-mods in {}\'s channel. Sorry {}", msg_ctx.channel_login, msg_ctx.sender.name));
+        }
     }
     const TIMEOUT_DIFF: i64 = 30;
     match runtype
