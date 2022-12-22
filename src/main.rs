@@ -39,6 +39,8 @@ use crate::commands::
     EventHandler,
     Runtype,
 };
+pub mod cmds;
+use crate::cmds::*;
 
 pub mod helpers;
 use crate::helpers::readlines_to_vec;
@@ -78,43 +80,45 @@ async fn main() -> anyhow::Result<()>
     // TEMP SETUP COMMANDS
     let bot_nick: String = bot_username.clone();
     let mut handler = EventHandler { bot_nick, command_map: HashMap::new() };
+    // TEST
     //handler.add_command(String::from("test"), commands::test_command);
 
-    // INTERNAL DB QUERY RELATED
-    handler.add_command(String::from("dreamboumtweet"), commands::dreamboumtweet);
-    handler.add_command(String::from("demongacha"), commands::demongacha);
-    handler.add_command(String::from("savedemon"), commands::savedemon);
-    handler.add_command(String::from("hornedanimegacha"), commands::hornedanimegacha);
-    handler.add_command(String::from("kinohackers"), commands::kinohackers);
-    // Fightgame Gachas
-    handler.add_command(String::from("melty"), commands::melty);
-    handler.add_command(String::from("lumina"), commands::lumina);
-    handler.add_command(String::from("melee"), commands::melee);
-    handler.add_command(String::from("soku"), commands::soku);
-    handler.add_command(String::from("bbcf"), commands::bbcf);
-    handler.add_command(String::from("ggxxacplusr"), commands::ggxxacplusr);
-    handler.add_command(String::from("akb"), commands::akb);
-    handler.add_command(String::from("vsav"), commands::vsav);
-    handler.add_command(String::from("jojos"), commands::jojos);
-    handler.add_command(String::from("millions"), commands::millions);
+    // GACHAS
+    handler.add_command(String::from("dreamboumtweet"), cmds::cmd_gacha::dreamboumtweet);
+    handler.add_command(String::from("demongacha"), cmds::cmd_gacha::demongacha);
+    handler.add_command(String::from("savedemon"), cmds::cmd_gacha::savedemon);
+    handler.add_command(String::from("hornedanimegacha"), cmds::cmd_gacha::hornedanimegacha);
+    handler.add_command(String::from("chen"), cmds::cmd_gacha::chen);
+    handler.add_command(String::from("melty"), cmds::cmd_gacha::melty);
+    handler.add_command(String::from("lumina"), cmds::cmd_gacha::lumina);
+    handler.add_command(String::from("melee"), cmds::cmd_gacha::melee);
+    handler.add_command(String::from("soku"), cmds::cmd_gacha::soku);
+    handler.add_command(String::from("bbcf"), cmds::cmd_gacha::bbcf);
+    handler.add_command(String::from("ggxxacplusr"), cmds::cmd_gacha::ggxxacplusr);
+    handler.add_command(String::from("akb"), cmds::cmd_gacha::akb);
+    handler.add_command(String::from("vsav"), cmds::cmd_gacha::vsav);
+    handler.add_command(String::from("jojos"), cmds::cmd_gacha::jojos);
+    handler.add_command(String::from("millions"), cmds::cmd_gacha::millions);
 
-    handler.add_command(String::from("pick"), commands::pick);
-    handler.add_command(String::from("range"), commands::range);
-    handler.add_command(String::from("hentai"), commands::is_hentai);
-    handler.add_command(String::from("cfb"), commands::cfb);
-    handler.add_command(String::from("chen"), commands::chen);
-
-    handler.add_command(String::from("me"), commands::me);
-    handler.add_command(String::from("help"), commands::help);
-    handler.add_command(String::from("cmds"), commands::cmds);
-    handler.add_command(String::from("poll"), commands::poll);
-    handler.add_command(String::from("repo"), commands::repo);
-    handler.add_command(String::from("weekly"), commands::weekly);
-    handler.add_command(String::from("iloveshadowhearts:fromthenewworld"), commands::shftnw);
+    // USERINFO
+    handler.add_command(String::from("me"), cmds::cmd_userinfo::me);
 
     // EXTERNAL GET REQUESTS
-    handler.add_command(String::from("speedgame"), commands::query_srl);
-    handler.add_command(String::from("pic"), commands::query_safebooru);
+    handler.add_command(String::from("speedgame"), cmds::cmd_externalquery::query_srl);
+    handler.add_command(String::from("pic"), cmds::cmd_externalquery::query_safebooru);
+
+    // MISC COMMANDS
+    handler.add_command(String::from("kinohackers"), cmds::cmd_misc::kinohackers);
+    handler.add_command(String::from("pick"), cmds::cmd_misc::pick);
+    handler.add_command(String::from("range"), cmds::cmd_misc::range);
+    handler.add_command(String::from("hentai"), cmds::cmd_misc::is_hentai);
+    handler.add_command(String::from("cfb"), cmds::cmd_misc::cfb);
+    handler.add_command(String::from("help"), cmds::cmd_misc::help);
+    handler.add_command(String::from("cmds"), cmds::cmd_misc::cmds);
+    handler.add_command(String::from("poll"), cmds::cmd_misc::poll);
+    handler.add_command(String::from("repo"), cmds::cmd_misc::repo);
+    handler.add_command(String::from("weekly"), cmds::cmd_misc::weekly);
+    handler.add_command(String::from("iloveshadowhearts:fromthenewworld"), cmds::cmd_misc::shftnw);
 
     let config =
     ClientConfig::new_simple(StaticLoginCredentials::new(bot_username.clone(), Some(oauth_token)));

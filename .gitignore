@@ -2,7 +2,6 @@
 /ops
 /partials
 /src/command.rs
-/src/commands/
 /src/test_db_stuff.rs
 /target
 /testing
