@@ -31,6 +31,7 @@ diesel::table! {
         user_nick -> Varchar,
         num_commands -> Int4,
         date_added -> Timestamp,
+        twitch_id -> Varchar,
     }
 }
 

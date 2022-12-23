@@ -36,33 +36,45 @@ use diesel::sql_query;
 ///////////////////////////////////////////////////////////////////////////////
 
 // called when a new user sends a valid request to execute a commands
-pub fn handle_bac_user_in_db(user_nick_str: String)
+pub fn handle_bac_user_in_db(user_nick_str: String, twitch_id_str: String)
 {
     use crate::schema::blueayachanuser::dsl::*;
     let mut connection: PgConnection = establish_connection();
     let user_nick_lower: String = user_nick_str.to_lowercase();
     // CHECK
     let user_exists: bool = select(exists(blueayachanuser.filter(user_nick.eq(&user_nick_lower))))
-    .get_result(&mut connection).unwrap();
+        .get_result(&mut connection).unwrap();
 
     if !user_exists // FIRST TIME USING A COMMAND
     {
         let first_command: i32 = 1;
         let nt_now: NaiveDateTime = chrono::offset::Local::now().naive_local();//.format("%H:%M:%S");
         let new_bac_user = NewBACUser
-        {user_nick: &user_nick_lower, num_commands: &first_command, date_added: &nt_now};
+        {user_nick: &user_nick_lower, num_commands: &first_command, date_added: &nt_now, twitch_id: &twitch_id_str};
+        // TODO: ADD A CHECK HERE QUERYING BY TWITCH_ID TO SEE IF THAT USER HAS EXISTED PREVIOUSLY IF TRUE MIGRATE THAT USERDATA TO NEW USER_NICK
         // insert
         diesel::insert_into(blueayachanuser)
-        .values(&new_bac_user)
-        .execute(&mut connection)
-        .expect("Error inserting new user");
+            .values(&new_bac_user)
+            .execute(&mut connection)
+            .expect("Error inserting new user");
     }
     else // ALREADY IN DATABASE
     {
+        let bacuser: BACUser = query_user_data(user_nick_str);
+        if bacuser.twitch_id == "Unregistered"
+        {
+            // TODO: ADD CHECK HERE TO SEE IF THE ID IS ALREADY IN DB TABLE
+            diesel::update(blueayachanuser
+                .filter(user_nick.eq(&user_nick_lower)))
+                .set(twitch_id.eq(twitch_id_str))
+                .execute(&mut connection);
+        }
         let updated_row = diesel::update(blueayachanuser.filter(user_nick.eq(user_nick_lower)))
-        .set(num_commands.eq(num_commands+1)).execute(&mut connection);
+            .set(num_commands.eq(num_commands+1))
+            .execute(&mut connection);
     }
 }
+//pub fn handle_id(){}
 
 pub fn query_user_data(user_nick_str: String) -> BACUser
 {
@@ -70,6 +82,14 @@ pub fn query_user_data(user_nick_str: String) -> BACUser
     let mut connection: PgConnection = establish_connection();
     let user_nick_lower: String = user_nick_str.to_lowercase();
     let result = blueayachanuser.filter(user_nick.eq(&user_nick_lower)).first::<BACUser>(&mut connection).expect("Oh no!");
+    return result;
+}
+
+pub fn query_user_data_by_tid(twitch_id_str: String) -> BACUser
+{
+    use crate::schema::blueayachanuser::dsl::*;
+    let mut connection: PgConnection = establish_connection();
+    let result = blueayachanuser.filter(twitch_id.eq(&twitch_id_str)).first::<BACUser>(&mut connection).expect("Oh no!");
     return result;
 }
 

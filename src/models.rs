@@ -14,6 +14,7 @@ pub struct NewBACUser<'a>
     pub user_nick: &'a str,
     pub num_commands: &'a i32,
     pub date_added: &'a NaiveDateTime,
+    pub twitch_id: &'a str,
 }
 
 #[derive(Queryable, Selectable)]
@@ -24,8 +25,26 @@ pub struct BACUser
     pub user_nick: String,
     pub num_commands: i32,
     pub date_added: NaiveDateTime,
+    pub twitch_id: String,
 }
 /*
+#[derive(Insertable)]//, Identifiable)]
+#[diesel(table_name = bac_twitch_id)]
+pub struct NewBACTwitchId<'a>
+{
+    pub user_id: &'a i32,
+    pub twitch_id: &'a str,
+}
+
+#[derive(Queryable, Selectable)]
+#[diesel(table_name = bac_twitch_id)]
+pub struct BACTwitchId
+{
+    pub id: i32,
+    pub user_id: i32,
+    pub twitch_id: String,
+}
+
 last_pasta TIMESTAMP DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
 last_pic TIMESTAMP DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
 */

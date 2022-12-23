@@ -83,7 +83,7 @@ impl EventHandler
         if self.command_map.contains_key(&name)
         {
             // TODO: check if command is allowed in channel
-            handle_bac_user_in_db(msg.sender.name.clone()); // Updates user database
+            handle_bac_user_in_db(msg.sender.name.clone(), msg.sender.id.clone()); // Updates user database
             const COMMAND_INDEX: usize = 0;
             let runtype: u8 = msg.message_text.clone().as_bytes()[COMMAND_INDEX]; // gets a byte literal (Ex. b'!')
             let callback = self.command_map.get(&name).expect("Could not execute function pointer!");
