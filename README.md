@@ -1,3 +1,4 @@
+![BAC_BP](https://github.com/electra13x7777/blueayachan_v2/actions/workflows/BAC.yml/badge.svg)
 ```
     ____  __    __  _____________  _____   ________  _____    _   __
    / __ )/ /   / / / / ____/   \ \/ /   | / ____/ / / /   |  / | / /
@@ -13,7 +14,6 @@
 
 ## Devlog
 ### Commands
-* Callback that can interop with every command
 * Dreamboumtweets ported. Follow [@dreamboum](https://twitter.com/Dreamboum) please!
 * Demongacha ported (You can now save your previous demon with !savedemon and view it with #demongacha)
 * HornedAnimeGacha is back!
@@ -35,4 +35,4 @@
 
 ### More to come soon!
 [Blueayachan Version 1](https://github.com/electra13x7777/blueayachan)
-#### Date Last Updated: 12/22/2022
+#### Date Last Updated: 12/25/2022

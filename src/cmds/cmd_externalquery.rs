@@ -86,8 +86,9 @@ pub struct SafebooruPosts
 }
 
 // Command: !pic
-//
-//
+// Function: query_safebooru
+// Return Type: Result<String>
+// Description: Sends a GET request to the safebooru API which returns XML data for posts. Then parses that data into abstractions of the Posts on safebooru. 
 pub async fn query_safebooru(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
 {
     const HAS_TIMEOUT: bool = true;
@@ -101,7 +102,7 @@ pub async fn query_safebooru(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Re
     if CHANNEL_FILTER && MOD_ONLY.contains(&msg_ctx.channel_login.as_str())
     {
         let badges: Vec<String> = msg_ctx.badges.iter().map(|b| b.name.clone()).collect();
-        if !badges.contains(&"moderator".to_string()) && !badges.contains(&"broadcaster".to_string())
+        if !badges.contains(&"moderator".to_string()) && !badges.contains(&"broadcaster".to_string()) && !badges.contains(&"vip".to_string())
         {
             return Ok(format!("This command is not available to non-mods in {}\'s channel. Sorry {}", msg_ctx.channel_login, msg_ctx.sender.name));
         }

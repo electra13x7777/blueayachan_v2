@@ -85,6 +85,7 @@ pub fn query_user_data(user_nick_str: String) -> BACUser
     return result;
 }
 
+// ONLY FOR COMMAND IMPLEMENTATION USE
 pub fn query_user_data_by_tid(twitch_id_str: String) -> BACUser
 {
     use crate::schema::blueayachanuser::dsl::*;

@@ -142,10 +142,10 @@ pub struct NDemon
 pub struct New_SavedNDemon<'a>
 {
     pub user_id: &'a i32, // BACUser
-    //pub saved_demon_name: &'a str, // only updates when saved
+    // only updates when saved
     pub saved_demon_id: &'a i32,
     pub saved_demon_rarity: &'a i32,
-    //pub last_demon_name: &'a str, // updated every time
+    // updated every time
     pub last_demon_id: &'a i32,
     pub last_demon_rarity: &'a i32,
 }

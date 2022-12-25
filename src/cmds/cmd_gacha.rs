@@ -102,7 +102,13 @@ pub async fn demongacha(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<
             // HANDLE AUX DB STUFF
             // TODO: CHANGE THIS TO QUERY BY ID
             let bacuser: BACUser = query_user_data(msg_ctx.sender.name.to_lowercase());
+            //let name = demon.demon_name;
             handle_user_last_demon(bacuser, &demon, &rarity);
+            if &demon.demon_name == "Kusi Mitama"
+            {
+                return Ok(format!("{} summoned a {}⭐ NAME_CENSORED_BY_TWITCH_POLICE Mitama! {}", msg_ctx.sender.name, rarity, demon.demon_img_link));
+
+            }
             return Ok(format!("{} summoned a {}⭐ {}! {}", msg_ctx.sender.name, rarity, demon.demon_name, demon.demon_img_link));
         },
         b'?' =>
@@ -137,7 +143,6 @@ pub async fn demongacha(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<
 
 pub async fn savedemon(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
 {
-    //const TOTAL_TWEETS: usize = 6569;
     match runtype
     {
         b'!' =>
@@ -161,7 +166,6 @@ pub async fn savedemon(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<S
 
 pub async fn hornedanimegacha(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
 {
-    //const TOTAL_TWEETS: usize = 6569;
     match runtype
     {
         b'!' =>
@@ -241,6 +245,7 @@ pub async fn chen(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String
             let mut chen_str: (String, String) = match msg_ctx.channel_login.as_str() // will read from a database eventually
             {
                 "claude" => (String::from("HONKHONK"), String::from("CirnoGenius")),
+                "blueayachan" => (String::from("saHonk"), String::from("CirnoGenius")),
                 "darko_rta" => (String::from("saHonk"), String::from("CirnoGenius")),
                 "electra_rta" => (String::from("saHonk"), String::from("CirnoGenius")),
                 "crypton42" => (String::from("saHonk"), String::from("saHonk")),
@@ -279,6 +284,7 @@ pub async fn chen(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String
             let chen_str: String = match msg_ctx.channel_login.as_str() // will read from a database eventually
             {
                 "claude" => String::from("HONKHONK"),
+                "blueayachan" => String::from("saHonk"),
                 "darko_rta" => String::from("saHonk"),
                 "electra_rta" => String::from("saHonk"),
                 "crypton42" => String::from("saHonk"),
