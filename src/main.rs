@@ -161,7 +161,7 @@ async fn main() -> anyhow::Result<()>
                     false => println!("[{}] #{} <{}>: {}", dt_fmt, msg.channel_login, &msg.sender.name, msg.message_text),
                     _ => panic!(),
                 }
-                handle_priv(clone.clone(), bot_username.clone(), msg, &handler).await;
+                handle_priv(clone.clone(), msg, &handler).await;
             }
         }
     });
@@ -174,21 +174,12 @@ async fn main() -> anyhow::Result<()>
 }
 
 // Handle Commands
-async fn handle_priv(client: Twitch_Client, bot_username: String, msg: PrivmsgMessage, handler: &EventHandler)
+async fn handle_priv(client: Twitch_Client, msg: PrivmsgMessage, handler: &EventHandler)
 {
     //tracing::info!("Received message: {:#?}", msg);
 
-    if let Some(runtype) = commands::Runtype::try_from_msg(&msg.message_text)
+    if let Some(command) = commands::Command::try_from_msg(msg)
     {
-        let mut proc_msg: String = msg.message_text.to_lowercase().clone();
-        proc_msg = String::from(&proc_msg[1..]); // send the name forced lowercase for case insensitivity /*name.len()*/
-        let text = proc_msg.as_str();
-        let (name_str, args_start) = match text.split_once(' ')
-        {
-            Some((name_str, args_start)) => (name_str, args_start),
-            None => (text, ""),
-        };
-        // TODO: parameterize ARGS
-        handler.execute_command(String::from(name_str), client, msg).await.unwrap();
+        handler.execute_command(command, client).await.unwrap();
     }
 }

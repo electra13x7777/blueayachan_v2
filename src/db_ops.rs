@@ -36,13 +36,12 @@ use diesel::sql_query;
 ///////////////////////////////////////////////////////////////////////////////
 
 // called when a new user sends a valid request to execute a commands
-pub fn handle_bac_user_in_db(user_nick_str: String, twitch_id_str: String)
+pub fn handle_bac_user_in_db(user_nick_str: &str, twitch_id_str: &str)
 {
     use crate::schema::blueayachanuser::dsl::*;
     let mut connection: PgConnection = establish_connection();
-    let user_nick_lower: String = user_nick_str.to_lowercase();
     // CHECK
-    let user_exists: bool = select(exists(blueayachanuser.filter(user_nick.eq(&user_nick_lower))))
+    let user_exists: bool = select(exists(blueayachanuser.filter(user_nick.eq(user_nick_str))))
         .get_result(&mut connection).unwrap();
 
     if !user_exists // FIRST TIME USING A COMMAND
@@ -50,7 +49,7 @@ pub fn handle_bac_user_in_db(user_nick_str: String, twitch_id_str: String)
         let first_command: i32 = 1;
         let nt_now: NaiveDateTime = chrono::offset::Local::now().naive_local();//.format("%H:%M:%S");
         let new_bac_user = NewBACUser
-        {user_nick: &user_nick_lower, num_commands: &first_command, date_added: &nt_now, twitch_id: &twitch_id_str};
+        {user_nick: user_nick_str, num_commands: &first_command, date_added: &nt_now, twitch_id: &twitch_id_str};
         // TODO: ADD A CHECK HERE QUERYING BY TWITCH_ID TO SEE IF THAT USER HAS EXISTED PREVIOUSLY IF TRUE MIGRATE THAT USERDATA TO NEW USER_NICK
         // insert
         diesel::insert_into(blueayachanuser)
@@ -65,23 +64,22 @@ pub fn handle_bac_user_in_db(user_nick_str: String, twitch_id_str: String)
         {
             // TODO: ADD CHECK HERE TO SEE IF THE ID IS ALREADY IN DB TABLE
             diesel::update(blueayachanuser
-                .filter(user_nick.eq(&user_nick_lower)))
+                .filter(user_nick.eq(&user_nick_str)))
                 .set(twitch_id.eq(twitch_id_str))
                 .execute(&mut connection);
         }
-        let updated_row = diesel::update(blueayachanuser.filter(user_nick.eq(user_nick_lower)))
+        let updated_row = diesel::update(blueayachanuser.filter(user_nick.eq(user_nick_str)))
             .set(num_commands.eq(num_commands+1))
             .execute(&mut connection);
     }
 }
 //pub fn handle_id(){}
 
-pub fn query_user_data(user_nick_str: String) -> BACUser
+pub fn query_user_data(user_nick_str: &str) -> BACUser
 {
     use crate::schema::blueayachanuser::dsl::*;
     let mut connection: PgConnection = establish_connection();
-    let user_nick_lower: String = user_nick_str.to_lowercase();
-    let result = blueayachanuser.filter(user_nick.eq(&user_nick_lower)).first::<BACUser>(&mut connection).expect("Oh no!");
+    let result = blueayachanuser.filter(user_nick.eq(user_nick_str)).first::<BACUser>(&mut connection).expect("Oh no!");
     return result;
 }
 

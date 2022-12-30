@@ -21,26 +21,26 @@ use twitch_irc::
     ClientConfig, SecureTCPTransport, TwitchIRCClient,
 };
 
-use crate::helpers::readlines_to_vec;
+use crate::{helpers::readlines_to_vec, commands::{Command, Runtype}};
 use crate::db_ops::*;
 use crate::models::*;
 
-pub async fn dreamboumtweet(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>//Option<String>//(String, String)
+pub async fn dreamboumtweet(command: Command) -> anyhow::Result<String>//Option<String>//(String, String)
 {
     //const TOTAL_TWEETS: usize = 6569;
-    match runtype
+    match command.runtype
     {
-        b'!' =>
+        Runtype::Command =>
         {
             let id: i32 = rand::thread_rng().gen_range(1..=get_dbt_count()).try_into().unwrap();
             let tweet_ctx = query_single_dbtweet(id);
             return Ok(String::from(tweet_ctx));
         },
-        b'?' =>
+        Runtype::Help =>
         {
             return Ok(format!("This command sends a random tweet made by twitter user @Dreamboum. TOTAL_TWEETS: {}", get_dbt_count()));
         },
-        b'#' =>
+        Runtype::Hash =>
         {
             let dbt_vec = readlines_to_vec("assets/dreamboum_tweets_10_05_2022.txt").expect("Could not load lines");
             let index = rand::thread_rng().gen_range(0..dbt_vec.len());
@@ -49,7 +49,7 @@ pub async fn dreamboumtweet(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Res
             let tweet_ctx: &str = &dbt_vec[index];
             return Ok(String::from(tweet_ctx));
         },
-        b'~' =>
+        Runtype::Tilde =>
         {
             let dbt_vec: Vec<(String, String)> = query_dbtweet_to_vec();
             let index = rand::thread_rng().gen_range(1..=dbt_vec.len());
@@ -65,11 +65,11 @@ pub async fn dreamboumtweet(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Res
 }
 
 // DEMONGACHA
-pub async fn demongacha(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+pub async fn demongacha(command: Command) -> anyhow::Result<String>
 {
-    match runtype
+    match command.runtype
     {
-        b'!' =>
+        Runtype::Command =>
         {
             // query random demon
             let id: i32 =rand::thread_rng().gen_range(1..=get_demon_count()).try_into().unwrap();
@@ -101,25 +101,25 @@ pub async fn demongacha(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<
 
             // HANDLE AUX DB STUFF
             // TODO: CHANGE THIS TO QUERY BY ID
-            let bacuser: BACUser = query_user_data(msg_ctx.sender.name.to_lowercase());
+            let bacuser: BACUser = query_user_data(&command.sender_name_lowercase);
             //let name = demon.demon_name;
             handle_user_last_demon(bacuser, &demon, &rarity);
             if &demon.demon_name == "Kusi Mitama"
             {
-                return Ok(format!("{} summoned a {}⭐ NAME_CENSORED_BY_TWITCH_POLICE Mitama! {}", msg_ctx.sender.name, rarity, demon.demon_img_link));
+                return Ok(format!("{} summoned a {}⭐ NAME_CENSORED_BY_TWITCH_POLICE Mitama! {}", command.msg.sender.name, rarity, demon.demon_img_link));
 
             }
-            return Ok(format!("{} summoned a {}⭐ {}! {}", msg_ctx.sender.name, rarity, demon.demon_name, demon.demon_img_link));
+            return Ok(format!("{} summoned a {}⭐ {}! {}", command.msg.sender.name, rarity, demon.demon_name, demon.demon_img_link));
         },
-        b'?' =>
+        Runtype::Help =>
         {
 
             return Ok(format!("This command summons a random demon from Shin Megami Tensei III: Nocturne. Use <!savedemon> to save your last demon. Use <#demongacha> to see your saved demon. TOTAL_DEMONS: {}", get_demon_count()));
         },
-        b'#' =>
+        Runtype::Hash =>
         {
             // TODO: need to check for no table entry
-            let bacuser: BACUser = query_user_data(msg_ctx.sender.name.to_lowercase());
+            let bacuser: BACUser = query_user_data(&command.sender_name_lowercase);
             let sud = match query_user_demon(&bacuser)
             {
                 // HANDLE SOME (GOOD DATA)
@@ -127,7 +127,7 @@ pub async fn demongacha(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<
                 // HANDLE NONE (NO DATA)
                 None =>
                 {
-                    return Ok(format!("NO SAVED DEMON FOUND!!! {} please run <!demongacha> and <!savedemon> first!!!", msg_ctx.sender.name));
+                    return Ok(format!("NO SAVED DEMON FOUND!!! {} please run <!demongacha> and <!savedemon> first!!!", command.msg.sender.name));
                 },
             };
             let demon: NDemon = query_demon(sud.saved_demon_id);
@@ -141,17 +141,17 @@ pub async fn demongacha(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<
     }
 }
 
-pub async fn savedemon(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+pub async fn savedemon(command: Command) -> anyhow::Result<String>
 {
-    match runtype
+    match command.runtype
     {
-        b'!' =>
+        Runtype::Command =>
         {
-            let bacuser: BACUser = query_user_data(msg_ctx.sender.name.to_lowercase());
+            let bacuser: BACUser = query_user_data(&command.sender_name_lowercase);
             save_user_demon(bacuser);
-            return Ok(format!("{} saved their last demon", msg_ctx.sender.name));
+            return Ok(format!("{} saved their last demon", command.msg.sender.name));
         },
-        b'?' =>
+        Runtype::Help =>
         {
 
             return Ok(format!("This command saves the last demon you summoned with !demongacha."));
@@ -164,11 +164,11 @@ pub async fn savedemon(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<S
 }
 
 
-pub async fn hornedanimegacha(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+pub async fn hornedanimegacha(command: Command) -> anyhow::Result<String>
 {
-    match runtype
+    match command.runtype
     {
-        b'!' =>
+        Runtype::Command =>
         {
             // query random demon
             let id: i32 = rand::thread_rng().gen_range(1..=get_hornedanime_count()).try_into().unwrap();
@@ -196,9 +196,9 @@ pub async fn hornedanimegacha(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::R
             {
                 1
             };
-            return Ok(format!("{} rolled a {}⭐ {}!", msg_ctx.sender.name, rarity, ha));
+            return Ok(format!("{} rolled a {}⭐ {}!", command.msg.sender.name, rarity, ha));
         },
-        b'?' =>
+        Runtype::Help =>
         {
 
             return Ok(format!("This command rolls for a random HornedAnime. TOTAL_HORNEDANIMES: {}", get_hornedanime_count()));
@@ -210,11 +210,11 @@ pub async fn hornedanimegacha(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::R
     }
 }
 
-pub async fn melty(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+pub async fn melty(command: Command) -> anyhow::Result<String>
 {
-    match runtype
+    match command.runtype
     {
-        b'!' =>
+        Runtype::Command =>
         {
             let id: i32 = rand::thread_rng().gen_range(1..=get_melty_count()).try_into().unwrap();
             let queried_string: String = query_melty(id);
@@ -226,9 +226,9 @@ pub async fn melty(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<Strin
                 2 => "Full Moon",
                 _ => "",
             };
-            return Ok(format!("{} your new main in Melty Blood: Actress Again is {} {}!", msg_ctx.sender.name, moon.to_string(), queried_string));
+            return Ok(format!("{} your new main in Melty Blood: Actress Again is {} {}!", command.msg.sender.name, moon.to_string(), queried_string));
         },
-        b'?' =>
+        Runtype::Help =>
         {
             return Ok(format!("This command gives you a brand new main for Melty Blood: Actress Again"));
         },
@@ -236,13 +236,13 @@ pub async fn melty(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<Strin
     }
 }
 
-pub async fn chen(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+pub async fn chen(command: Command) -> anyhow::Result<String>
 {
-    match runtype
+    match command.runtype
     {
-        b'!' =>
+        Runtype::Command =>
         {
-            let mut chen_str: (String, String) = match msg_ctx.channel_login.as_str() // will read from a database eventually
+            let mut chen_str: (String, String) = match command.msg.channel_login.as_str() // will read from a database eventually
             {
                 "claude" => (String::from("HONKHONK"), String::from("CirnoGenius")),
                 "blueayachan" => (String::from("saHonk"), String::from("CirnoGenius")),
@@ -255,8 +255,8 @@ pub async fn chen(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String
             let chens: usize = rand::thread_rng().gen_range(0..=10);
             match chens
             {
-                0 => return Ok(format!("{}... got 0 chens :(", msg_ctx.sender.name)),
-                1 => return Ok(format!("{} got {} chen. {}",  msg_ctx.sender.name, chens, chen_str.0)),
+                0 => return Ok(format!("{}... got 0 chens :(", command.msg.sender.name)),
+                1 => return Ok(format!("{} got {} chen. {}",  command.msg.sender.name, chens, chen_str.0)),
                 _ => chens
             };
             let mut new_chens: String = "".to_owned();
@@ -273,15 +273,15 @@ pub async fn chen(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String
                     new_chens += " ";
                 }
             }
-            Ok(format!("{} got a {} chen combo! {}",  msg_ctx.sender.name, chens, new_chens))
+            Ok(format!("{} got a {} chen combo! {}",  command.msg.sender.name, chens, new_chens))
         },
-        b'?' =>
+        Runtype::Help =>
         {
             Ok(format!("This command gives you chens. Yay!"))
         },
-        b'#' =>
+        Runtype::Hash =>
         {
-            let chen_str: String = match msg_ctx.channel_login.as_str() // will read from a database eventually
+            let chen_str: String = match command.msg.channel_login.as_str() // will read from a database eventually
             {
                 "claude" => String::from("HONKHONK"),
                 "blueayachan" => String::from("saHonk"),
@@ -318,17 +318,17 @@ macro_rules! generate_simple_gacha
 {
     ($fn_name:ident, $game_name:literal, $count:ident, $query_fn:ident) =>
     {
-        pub async fn $fn_name(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+        pub async fn $fn_name(command: Command) -> anyhow::Result<String>
         {
-            match runtype
+            match command.runtype
             {
-                b'!' =>
+                Runtype::Command =>
                 {
                     let id: i32 = rand::thread_rng().gen_range(1..=$count()).try_into().unwrap();
                     let queried_string: String = $query_fn(id);
-                    return Ok(format!("{} your new main in {} is {}!", msg_ctx.sender.name, $game_name, queried_string));
+                    return Ok(format!("{} your new main in {} is {}!", command.msg.sender.name, $game_name, queried_string));
                 },
-                b'?' =>
+                Runtype::Help =>
                 {
                     return Ok(format!("This command gives you a brand new main for {}", $game_name));
                 },

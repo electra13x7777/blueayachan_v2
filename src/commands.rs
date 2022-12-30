@@ -39,7 +39,7 @@ pub type Twitch_Client = TwitchIRCClient<SecureTCPTransport, StaticLoginCredenti
 
 // CALLBACK TYPES (Blocking, Non-Blocking) [Function Pointers]
 //pub type Callback = fn(u8, PrivmsgMessage) -> anyhow::Result<String>;
-pub type Callback = Box<dyn Fn(u8, PrivmsgMessage) -> Pin<Box<dyn Future<Output = anyhow::Result<String>> + 'static + Send + Sync,>> + 'static + Send + Sync,>;
+pub type Callback = Box<dyn Fn(Command) -> Pin<Box<dyn Future<Output = anyhow::Result<String>> + 'static + Send + Sync,>> + 'static + Send + Sync,>;
 
 
 pub struct EventHandler
@@ -55,10 +55,10 @@ impl EventHandler
     // Future yields a Result that can be unwrapped into a String
     pub fn add_command<Cb, F>(&mut self, name: String, function: Cb)
     where
-    Cb: Fn(u8, PrivmsgMessage) -> F + 'static + Send + Sync,
+    Cb: Fn(Command) -> F + 'static + Send + Sync,
     F: Future<Output = anyhow::Result<String>> + 'static + Send + Sync,
     {
-        let cb = Box::new(move |a, b| Box::pin(function(a, b)) as _);
+        let cb = Box::new(move |cmd| Box::pin(function(cmd)) as _);
         self.command_map.insert(name, cb);
     }
 
@@ -78,31 +78,58 @@ impl EventHandler
 
         FOR COMMAND IMPLEMENTATIONS SEE ~/cmds/
     */
-    pub async fn execute_command(&self, name: String, client: Twitch_Client, msg: PrivmsgMessage) -> anyhow::Result<()>
+    pub async fn execute_command(&self, command: Command, client: Twitch_Client) -> anyhow::Result<()>
     {
-        if self.command_map.contains_key(&name)
+        if let Some(callback) = self.command_map.get(&command.name_lowercase)
         {
             // TODO: check if command is allowed in channel
-            handle_bac_user_in_db(msg.sender.name.clone(), msg.sender.id.clone()); // Updates user database
+            handle_bac_user_in_db(&command.sender_name_lowercase, &command.msg.sender.id); // Updates user database
             const COMMAND_INDEX: usize = 0;
-            let runtype: u8 = msg.message_text.clone().as_bytes()[COMMAND_INDEX]; // gets a byte literal (Ex. b'!')
-            let callback = self.command_map.get(&name).expect("Could not execute function pointer!");
-            let res = String::from(callback(runtype, msg.clone()).await.unwrap());
-            if &res == ""{return Ok(());} // if we have nothing to send skip the send
+            let channel_login = command.msg.channel_login.clone();
+            let res = callback(command).await?;
+            if res.is_empty() {return Ok(());} // if we have nothing to send skip the send
             let dt_fmt = chrono::offset::Local::now().format("%H:%M:%S").to_string();
             const COLOR_FLAG: bool = true;
             match COLOR_FLAG
             {
-                true => println!("[{}] #{} <{}>: {}", dt_fmt.truecolor(138, 138, 138), msg.channel_login.truecolor(117, 97, 158), self.bot_nick.red(), res),
-                false => println!("[{}] #{} <{}>: {}", dt_fmt, msg.channel_login, self.bot_nick, res),
+                true => println!("[{}] #{} <{}>: {}", dt_fmt.truecolor(138, 138, 138), channel_login.truecolor(117, 97, 158), self.bot_nick.red(), res),
+                false => println!("[{}] #{} <{}>: {}", dt_fmt, channel_login, self.bot_nick, res),
             }
-            client.say(msg.channel_login.clone(), format!("{}", res)).await?;
+            client.say(channel_login, res).await?;
         }
         Ok(())
     }
 }
 
+#[derive(Debug)]
+pub struct Command {
+    pub name_lowercase: String,
+    pub args: String,
+    pub runtype: Runtype,
+    pub sender_name_lowercase: String,
+    pub msg: PrivmsgMessage,
+}
+
+impl Command {
+    pub fn try_from_msg(msg: PrivmsgMessage) -> Option<Self> {
+        let runtype = Runtype::try_from_msg(&msg.message_text)?;
+        let contents = msg.message_text.get(1..)?;
+        let (name, args) = match contents.split_once(' ') {
+            Some((name, args)) => (name, args),
+            None => (contents, ""),
+        };
+        Some(Self {
+            name_lowercase: name.to_lowercase(),
+            args: args.to_string(),
+            runtype,
+            sender_name_lowercase: msg.sender.name.to_lowercase(),
+            msg,
+        })
+    }
+}
+
 // AZUCHANG'S BOILERPLATE
+#[derive(Debug)]
 pub enum Runtype
 {
     Command,

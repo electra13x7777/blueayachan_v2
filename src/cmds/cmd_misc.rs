@@ -21,13 +21,13 @@ use twitch_irc::
     ClientConfig, SecureTCPTransport, TwitchIRCClient,
 };
 
-use crate::helpers::readlines_to_vec;
+use crate::{helpers::readlines_to_vec, commands::{Runtype, Command}};
 use crate::db_ops::*;
 use crate::models::*;
 
-pub async fn range(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+pub async fn range(command: Command) -> anyhow::Result<String>
 {
-    fn arg_is_int(s: &String) -> bool
+    fn arg_is_int(s: &str) -> bool
     {
         let mut i: i32 = 0;
         for c in s.chars()
@@ -48,19 +48,13 @@ pub async fn range(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<Strin
         }
         return true;
     }
-    match runtype
+    match command.runtype
     {
-        b'!' =>
+        Runtype::Command =>
         {
             const I64LEN: usize = "9223372036854775807".len();
-            let text = msg_ctx.message_text.as_str();
-            let (name, args) = match text.split_once(' ')
-            {
-                Some((name, args)) => (name, args),
-                None => (text, ""),
-            };
 
-            let argv_s: Vec<String> = args.split(' ').map(|s| s.to_string()).collect();
+            let argv_s: Vec<&str> = command.args.split(' ').collect();
             // check arg count
             if argv_s.len() != 2{return Ok(format!("Bad argument count! Please make sure your command follows this syntax: !range INT1 INT2"));}
             // check if int
@@ -82,9 +76,9 @@ pub async fn range(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<Strin
 
             if argv[0] > argv[1]{argv.swap(0, 1);}
             let rand_int: i64 = rand::thread_rng().gen_range(argv[0]..=argv[1]);
-            Ok(format!("{} your new integer value is {}!", msg_ctx.sender.name, rand_int))
+            Ok(format!("{} your new integer value is {}!", command.msg.sender.name, rand_int))
         },
-        b'?' =>
+        Runtype::Help =>
         {
             Ok(format!("This command picks a random 32 bit integer in a given range. Use whitespace to separate the numbers. | USAGE: !range INT1 INT2 | !range INT2 INT1 -> swaps larger and smaller to make it easy to use. NOTE: Range command is INCLUSIVE of the upperbound"))
         },
@@ -92,26 +86,20 @@ pub async fn range(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<Strin
     }
 }
 
-pub async fn pick(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+pub async fn pick(command: Command) -> anyhow::Result<String>
 {
-    match runtype
+    match command.runtype
     {
-        b'!' =>
+        Runtype::Command =>
         {
-            let text = msg_ctx.message_text.as_str(); // get str from msg context
-            let (name, args) = match text.split_once(' ')
-            {
-                Some((name, args)) => (name, args),
-                None => (text, ""),
-            };
             // should we ever want to refactor to have whitespace split the 2 tag arguments
-            let argv: Vec<String> = args.split(' ').map(|s| s.to_string()).collect();
+            let argv: Vec<&str> = command.args.split(' ').collect();
             //args.split_whitespace().collect();//::<Vec<String>>();//.join("+")
             let index: usize = rand::thread_rng().gen_range(0..argv.len());
             Ok(format!("picks {}", argv[index]))
 
         },
-        b'?' =>
+        Runtype::Help =>
         {
             Ok(format!("This command picks a single argument from input provided via message. Use whitespace to make another argument for the bot to pick from (will be better in the future) | USAGE: !pick, !pick ARG, !pick ARG1 ARG2, !pick ARG1 ... ARGn |"))
         },
@@ -119,18 +107,18 @@ pub async fn pick(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String
     }
 }
 
-pub async fn is_hentai(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+pub async fn is_hentai(command: Command) -> anyhow::Result<String>
 {
-    match runtype
+    match command.runtype
     {
-        b'!' =>
+        Runtype::Command =>
         {
-            let out: Vec<&str> = vec!("This game is hentai DataSweat", "This game is NOT hentai YoumuAngry", "This game could possibly be hentai, but more testing is needed MarisaFace");
+            let out: &[&str] = &["This game is hentai DataSweat", "This game is NOT hentai YoumuAngry", "This game could possibly be hentai, but more testing is needed MarisaFace"];
             let index: usize = rand::thread_rng().gen_range(0..out.len());
             Ok(format!("{}", out[index]))
 
         },
-        b'?' =>
+        Runtype::Help =>
         {
             Ok(format!("This command lets the bot decide if any content on the stream contains hentai. NOTE: The author of this command does not guarantee its reliability..."))
         },
@@ -140,11 +128,11 @@ pub async fn is_hentai(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<S
 
 
 
-pub async fn cfb(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+pub async fn cfb(command: Command) -> anyhow::Result<String>
 {
-    match runtype
+    match command.runtype
     {
-        b'!' =>
+        Runtype::Command =>
         {
             let c_list: Vec<String> = readlines_to_vec("assets/c.txt").expect("Error reading file!");
             let f_list: Vec<String> = readlines_to_vec("assets/f.txt").expect("Error reading file!");
@@ -154,7 +142,7 @@ pub async fn cfb(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
             let index_b: usize = rand::thread_rng().gen_range(0..b_list.len());
             Ok(format!("{} {} {}", c_list[index_c], f_list[index_f], b_list[index_b]))
         },
-        b'?' =>
+        Runtype::Help =>
         {
             Ok(format!("This command generates a string containing words that start with C, F, and B"))
         },
@@ -162,17 +150,17 @@ pub async fn cfb(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
     }
 }
 
-pub async fn kinohackers(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+pub async fn kinohackers(command: Command) -> anyhow::Result<String>
 {
-    match runtype
+    match command.runtype
     {
-        b'!' =>
+        Runtype::Command =>
         {
             let id: i32 = rand::thread_rng().gen_range(1..=get_kinohack_count()).try_into().unwrap();
             let queried_link: String = query_kinohackers(id);
             return Ok(format!("{}", queried_link));
         },
-        b'?' =>
+        Runtype::Help =>
         {
             return Ok(format!("This command gives you a brand kinohackers meme made by various members of the Claude influencer circle"));
         },
@@ -180,15 +168,15 @@ pub async fn kinohackers(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result
     }
 }
 
-pub async fn shftnw(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+pub async fn shftnw(command: Command) -> anyhow::Result<String>
 {
-    match runtype
+    match command.runtype
     {
-        b'!' =>
+        Runtype::Command =>
         {
-            return Ok(format!("{} loves Shadow Hearts: From the New World!", msg_ctx.sender.name));
+            return Ok(format!("{} loves Shadow Hearts: From the New World!", command.msg.sender.name));
         },
-        b'?' =>
+        Runtype::Help =>
         {
             return Ok(format!("This is the worlds most useless command"));
         },
@@ -202,11 +190,11 @@ macro_rules! generate_simple_command
 {
     ($fn_name:ident, $text:literal) =>
     {
-        pub async fn $fn_name(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+        pub async fn $fn_name(command: Command) -> anyhow::Result<String>
         {
-            match runtype
+            match command.runtype
             {
-                b'!' =>
+                Runtype::Command =>
                 {
                     return Ok(format!($text));
                 }
