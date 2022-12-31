@@ -178,8 +178,9 @@ async fn handle_priv(client: Twitch_Client, msg: PrivmsgMessage, handler: &Event
 {
     //tracing::info!("Received message: {:#?}", msg);
 
-    if let Some(command) = commands::Command::try_from_msg(msg)
+    if let Some(runtype) = commands::Runtype::try_from_msg(&msg.message_text)
     {
-        handler.execute_command(command, client).await.unwrap();
+        let command = commands::Command::new(msg);
+        handler.execute_command(runtype, command, client).await.unwrap();
     }
 }

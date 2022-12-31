@@ -25,10 +25,10 @@ use crate::{helpers::readlines_to_vec, commands::{Command, Runtype}};
 use crate::db_ops::*;
 use crate::models::*;
 
-pub async fn me(command: Command) -> anyhow::Result<String>
+pub async fn me(runtype: Runtype, command: Command) -> anyhow::Result<String>
 {
-    let user_data: BACUser = query_user_data(&command.sender_name_lowercase);
-    match command.runtype
+    let user_data: BACUser = query_user_data(&command.msg.sender.name.to_lowercase());
+    match runtype
     {
         Runtype::Command =>
         {

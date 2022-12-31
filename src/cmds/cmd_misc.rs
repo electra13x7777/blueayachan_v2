@@ -25,7 +25,7 @@ use crate::{helpers::readlines_to_vec, commands::{Runtype, Command}};
 use crate::db_ops::*;
 use crate::models::*;
 
-pub async fn range(command: Command) -> anyhow::Result<String>
+pub async fn range(runtype: Runtype, command: Command) -> anyhow::Result<String>
 {
     fn arg_is_int(s: &str) -> bool
     {
@@ -48,13 +48,13 @@ pub async fn range(command: Command) -> anyhow::Result<String>
         }
         return true;
     }
-    match command.runtype
+    match runtype
     {
         Runtype::Command =>
         {
             const I64LEN: usize = "9223372036854775807".len();
 
-            let argv_s: Vec<&str> = command.args.split(' ').collect();
+            let argv_s: Vec<&str> = command.args().split(' ').collect();
             // check arg count
             if argv_s.len() != 2{return Ok(format!("Bad argument count! Please make sure your command follows this syntax: !range INT1 INT2"));}
             // check if int
@@ -86,14 +86,14 @@ pub async fn range(command: Command) -> anyhow::Result<String>
     }
 }
 
-pub async fn pick(command: Command) -> anyhow::Result<String>
+pub async fn pick(runtype: Runtype, command: Command) -> anyhow::Result<String>
 {
-    match command.runtype
+    match runtype
     {
         Runtype::Command =>
         {
             // should we ever want to refactor to have whitespace split the 2 tag arguments
-            let argv: Vec<&str> = command.args.split(' ').collect();
+            let argv: Vec<&str> = command.args().split(' ').collect();
             //args.split_whitespace().collect();//::<Vec<String>>();//.join("+")
             let index: usize = rand::thread_rng().gen_range(0..argv.len());
             Ok(format!("picks {}", argv[index]))
@@ -107,9 +107,9 @@ pub async fn pick(command: Command) -> anyhow::Result<String>
     }
 }
 
-pub async fn is_hentai(command: Command) -> anyhow::Result<String>
+pub async fn is_hentai(runtype: Runtype, command: Command) -> anyhow::Result<String>
 {
-    match command.runtype
+    match runtype
     {
         Runtype::Command =>
         {
@@ -128,9 +128,9 @@ pub async fn is_hentai(command: Command) -> anyhow::Result<String>
 
 
 
-pub async fn cfb(command: Command) -> anyhow::Result<String>
+pub async fn cfb(runtype: Runtype, command: Command) -> anyhow::Result<String>
 {
-    match command.runtype
+    match runtype
     {
         Runtype::Command =>
         {
@@ -150,9 +150,9 @@ pub async fn cfb(command: Command) -> anyhow::Result<String>
     }
 }
 
-pub async fn kinohackers(command: Command) -> anyhow::Result<String>
+pub async fn kinohackers(runtype: Runtype, command: Command) -> anyhow::Result<String>
 {
-    match command.runtype
+    match runtype
     {
         Runtype::Command =>
         {
@@ -168,9 +168,9 @@ pub async fn kinohackers(command: Command) -> anyhow::Result<String>
     }
 }
 
-pub async fn shftnw(command: Command) -> anyhow::Result<String>
+pub async fn shftnw(runtype: Runtype, command: Command) -> anyhow::Result<String>
 {
-    match command.runtype
+    match runtype
     {
         Runtype::Command =>
         {
@@ -190,9 +190,9 @@ macro_rules! generate_simple_command
 {
     ($fn_name:ident, $text:literal) =>
     {
-        pub async fn $fn_name(command: Command) -> anyhow::Result<String>
+        pub async fn $fn_name(runtype: Runtype, command: Command) -> anyhow::Result<String>
         {
-            match command.runtype
+            match runtype
             {
                 Runtype::Command =>
                 {

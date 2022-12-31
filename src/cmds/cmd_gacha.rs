@@ -21,14 +21,14 @@ use twitch_irc::
     ClientConfig, SecureTCPTransport, TwitchIRCClient,
 };
 
-use crate::{helpers::readlines_to_vec, commands::{Command, Runtype}};
+use crate::{helpers::{readlines_to_vec, to_lowercase_cow}, commands::{Command, Runtype}};
 use crate::db_ops::*;
 use crate::models::*;
 
-pub async fn dreamboumtweet(command: Command) -> anyhow::Result<String>//Option<String>//(String, String)
+pub async fn dreamboumtweet(runtype: Runtype, command: Command) -> anyhow::Result<String>//Option<String>//(String, String)
 {
     //const TOTAL_TWEETS: usize = 6569;
-    match command.runtype
+    match runtype
     {
         Runtype::Command =>
         {
@@ -65,9 +65,9 @@ pub async fn dreamboumtweet(command: Command) -> anyhow::Result<String>//Option<
 }
 
 // DEMONGACHA
-pub async fn demongacha(command: Command) -> anyhow::Result<String>
+pub async fn demongacha(runtype: Runtype, command: Command) -> anyhow::Result<String>
 {
-    match command.runtype
+    match runtype
     {
         Runtype::Command =>
         {
@@ -101,7 +101,8 @@ pub async fn demongacha(command: Command) -> anyhow::Result<String>
 
             // HANDLE AUX DB STUFF
             // TODO: CHANGE THIS TO QUERY BY ID
-            let bacuser: BACUser = query_user_data(&command.sender_name_lowercase);
+            let sender_name_lowercase = to_lowercase_cow(&command.msg.sender.name);
+            let bacuser: BACUser = query_user_data(&sender_name_lowercase);
             //let name = demon.demon_name;
             handle_user_last_demon(bacuser, &demon, &rarity);
             if &demon.demon_name == "Kusi Mitama"
@@ -119,7 +120,8 @@ pub async fn demongacha(command: Command) -> anyhow::Result<String>
         Runtype::Hash =>
         {
             // TODO: need to check for no table entry
-            let bacuser: BACUser = query_user_data(&command.sender_name_lowercase);
+            let sender_name_lowercase = to_lowercase_cow(&command.msg.sender.name);
+            let bacuser: BACUser = query_user_data(&sender_name_lowercase);
             let sud = match query_user_demon(&bacuser)
             {
                 // HANDLE SOME (GOOD DATA)
@@ -141,13 +143,14 @@ pub async fn demongacha(command: Command) -> anyhow::Result<String>
     }
 }
 
-pub async fn savedemon(command: Command) -> anyhow::Result<String>
+pub async fn savedemon(runtype: Runtype, command: Command) -> anyhow::Result<String>
 {
-    match command.runtype
+    match runtype
     {
         Runtype::Command =>
         {
-            let bacuser: BACUser = query_user_data(&command.sender_name_lowercase);
+            let sender_name_lowercase = to_lowercase_cow(&command.msg.sender.name);
+            let bacuser: BACUser = query_user_data(&sender_name_lowercase);
             save_user_demon(bacuser);
             return Ok(format!("{} saved their last demon", command.msg.sender.name));
         },
@@ -164,9 +167,9 @@ pub async fn savedemon(command: Command) -> anyhow::Result<String>
 }
 
 
-pub async fn hornedanimegacha(command: Command) -> anyhow::Result<String>
+pub async fn hornedanimegacha(runtype: Runtype, command: Command) -> anyhow::Result<String>
 {
-    match command.runtype
+    match runtype
     {
         Runtype::Command =>
         {
@@ -210,9 +213,9 @@ pub async fn hornedanimegacha(command: Command) -> anyhow::Result<String>
     }
 }
 
-pub async fn melty(command: Command) -> anyhow::Result<String>
+pub async fn melty(runtype: Runtype, command: Command) -> anyhow::Result<String>
 {
-    match command.runtype
+    match runtype
     {
         Runtype::Command =>
         {
@@ -236,9 +239,9 @@ pub async fn melty(command: Command) -> anyhow::Result<String>
     }
 }
 
-pub async fn chen(command: Command) -> anyhow::Result<String>
+pub async fn chen(runtype: Runtype, command: Command) -> anyhow::Result<String>
 {
-    match command.runtype
+    match runtype
     {
         Runtype::Command =>
         {
@@ -318,9 +321,9 @@ macro_rules! generate_simple_gacha
 {
     ($fn_name:ident, $game_name:literal, $count:ident, $query_fn:ident) =>
     {
-        pub async fn $fn_name(command: Command) -> anyhow::Result<String>
+        pub async fn $fn_name(runtype: Runtype, command: Command) -> anyhow::Result<String>
         {
-            match command.runtype
+            match runtype
             {
                 Runtype::Command =>
                 {

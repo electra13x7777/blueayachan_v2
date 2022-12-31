@@ -23,7 +23,7 @@ use twitch_irc::
     message::{PrivmsgMessage, ServerMessage},
     ClientConfig, SecureTCPTransport, TwitchIRCClient,
 };
-use crate::{helpers::readlines_to_vec, commands::{Command, Runtype}};
+use crate::{helpers::{readlines_to_vec, to_lowercase_cow}, commands::{Command, Runtype}};
 use crate::db_ops::*;
 use crate::models::*;
 use serde::{Deserialize, Serialize};
@@ -33,9 +33,9 @@ use serde_json::{Result, Value};
 // Comamand: !speedgame
 //
 //
-pub async fn query_srl(command: Command) -> anyhow::Result<String>
+pub async fn query_srl(runtype: Runtype, command: Command) -> anyhow::Result<String>
 {
-    match command.runtype
+    match runtype
     {
         Runtype::Command =>
         {
@@ -89,7 +89,7 @@ pub struct SafebooruPosts
 // Function: query_safebooru
 // Return Type: Result<String>
 // Description: Sends a GET request to the safebooru API which returns XML data for posts. Then parses that data into abstractions of the Posts on safebooru. 
-pub async fn query_safebooru(command: Command) -> anyhow::Result<String>
+pub async fn query_safebooru(runtype: Runtype, command: Command) -> anyhow::Result<String>
 {
     const HAS_TIMEOUT: bool = true;
     const CHANNEL_FILTER: bool = true;
@@ -108,22 +108,23 @@ pub async fn query_safebooru(command: Command) -> anyhow::Result<String>
         }
     }
     const TIMEOUT_DIFF: i64 = 30;
-    match command.runtype
+    match runtype
     {
         Runtype::Command =>
         {
-            let req_str = format!("https://safebooru.org/index.php?page=dapi&s=post&q=index&rating=g&tags={}+-rating:questionable", command.args.to_lowercase());
+            let args_lowercase = to_lowercase_cow(command.args());
+            let req_str = format!("https://safebooru.org/index.php?page=dapi&s=post&q=index&rating=g&tags={}+-rating:questionable", args_lowercase);
             let data = reqwest::get(req_str).await?.text().await?;
             let posts: SafebooruPosts = match serde_xml_rs::from_str(&data)
             {
                 Ok(posts) => posts,
-                _ => return Ok(format!("No results found for given arguments: {} https://imgur.com/a/vQsv7Rj", command.args)),
+                _ => return Ok(format!("No results found for given arguments: {} https://imgur.com/a/vQsv7Rj", command.args())),
             };
             // handle timeout when we know we have queried an image
             if HAS_TIMEOUT
             {
                 let ndt_now: NaiveDateTime = chrono::offset::Local::now().naive_local();
-                let bacuser: BACUser = query_user_data(&command.sender_name_lowercase);
+                let bacuser: BACUser = query_user_data(&command.msg.sender.name.to_lowercase());
                 let timeout_out: (bool, i64) = handle_pic_timeout(bacuser, ndt_now, TIMEOUT_DIFF);
                 if !timeout_out.0 // User has not waited for the timeout length
                 {

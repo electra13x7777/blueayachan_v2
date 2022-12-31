@@ -13,7 +13,7 @@ use std::
     time::Duration,
     collections::HashMap,
     io,
-    io::{prelude::*, BufReader, Write},
+    io::{prelude::*, BufReader, Write}, borrow::Cow,
 };
 
 // TYPEOF //
@@ -46,4 +46,12 @@ pub fn readlines_to_map(filename: impl AsRef<Path>) -> io::Result<HashMap<String
         };
     }
     return Ok(res);
+}
+
+pub fn to_lowercase_cow(s: &str) -> Cow<'_, str> {
+    if s.chars().all(char::is_lowercase) {
+        Cow::Borrowed(s)
+    } else {
+        Cow::Owned(s.to_lowercase())
+    }
 }
