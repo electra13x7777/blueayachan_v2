@@ -118,6 +118,13 @@ async fn main() -> anyhow::Result<()>
     handler.add_command(String::from("poll"), cmds::cmd_misc::poll);
     handler.add_command(String::from("repo"), cmds::cmd_misc::repo);
     handler.add_command(String::from("weekly"), cmds::cmd_misc::weekly);
+
+    // ADMIN COMMANDS
+    handler.add_command(String::from("set"), cmds::cmd_admin::set_command);
+
+    //secret commands
+    handler.add_command(String::from("strive"), cmds::cmd_misc::strive);
+    handler.add_command(String::from("fsr"), cmds::cmd_misc::fsr);
     handler.add_command(String::from("iloveshadowhearts:fromthenewworld"), cmds::cmd_misc::shftnw);
 
     let config =
@@ -169,6 +176,7 @@ async fn main() -> anyhow::Result<()>
     {
         client.join(channel.to_lowercase()).unwrap();
     }
+    //client.join(channel).unwrap();
     join_handle.await.unwrap();
     Ok(())
 }

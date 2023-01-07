@@ -180,6 +180,35 @@ pub async fn kinohackers(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result
     }
 }
 
+pub async fn strive(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+{
+    match runtype
+    {
+        b'!' =>
+        {
+            return Ok(format!("😆 👉 STRIVE"));
+        },
+        b'?' =>
+        {
+            return Ok(format!("GGSTRIVE4EVER... For '#' runtype: #strive <chatter>"));
+        },
+        b'#' =>
+        {
+            let text = msg_ctx.message_text.as_str(); // get str from msg context
+            let (name, args) = match text.split_once(' ')
+            {
+                Some((name, args)) => (name, args),
+                None => (text, ""),
+            };
+            let argv_s: Vec<String> = args.split(' ').map(|s| s.to_string()).collect();
+            // check arg count
+            if argv_s.len() != 1{return Ok(format!("Bad argument count! Please make sure your command follows this syntax: #strive <chatter>"));}
+            return Ok(format!("{} accuses {} of being a Strive player!!!", msg_ctx.sender.name, argv_s[0]));
+        },
+        _ => Ok(String::from("")),
+    }
+}
+
 pub async fn shftnw(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
 {
     match runtype
@@ -219,4 +248,5 @@ generate_simple_command!(cmds, "Current Commands: dreamboumtweet, demongacha, sa
 generate_simple_command!(help, "Blueayachan version 2 supports multiple different \"runtype\" characters : \'!\' is supposed to produce similar functionality to the previous bot. \'?\' should give information and help regarding that command. \'#\' does the standard command with different functionality that is specific to the command itself. For a list of commands type !cmds");
 generate_simple_command!(poll, "THERE'S STILL TIME TO VOTE IN THE POLL! http://bombch.us/DYOt CirnoGenius");
 generate_simple_command!(repo, "You can find the github repository here: https://github.com/electra13x7777/blueayachan_v2");
+generate_simple_command!(fsr, "🌻 ☀️ 🌧️");
 generate_simple_command!(weekly, "Last Week's Top 15: https://imgur.com/a/PYmokTp");

@@ -12,7 +12,10 @@
 ```
 ## Blueayachan... But better!
 
-## Devlog
+### Roadmap
+* Have BAC Join and Leave your chat using `!join` and `!leave`
+* Command usage tracking on a per-channel basis
+* Custom Commands
 ### Commands
 * Dreamboumtweets ported. Follow [@dreamboum](https://twitter.com/Dreamboum) please!
 * Demongacha ported (You can now save your previous demon with !savedemon and view it with #demongacha)
@@ -29,10 +32,23 @@
 ### Get Started
 * type `!help` to get a description of how the bot can be used.
 * type `!cmds` to get a list of supported commands.
-
+### Admin Features with !set
+* A Broadcaster only command to help channel owners tailor bot use to their own needs! See the full documentation [here](https://pastebin.com/z6zxSiB5) or type `?set` in chat.
+```
+Supported Command Ops:
+on - Attempts to turn a command on
+off - Attempts to turn a command off
+toggle - Attempts to toggle the activity state of a command (on -> off, off -> on)
+timeout - Attempts to set and unset timeouts on a given command
+    - if given 0 -> turns timeout off
+    - if given 1 to 3600 -> turns on timeout and sets the timeout duration
+broadcaster - Attempts to set the command to broadcaster only
+mod - Attempts to set the command to broadcaster, mod, vip only
+all - Attempts to set the command to all chatters
+```
 ## Output
 ![CLI_output](https://i.imgur.com/NzXyqrf.png)
 
 ### More to come soon!
 [Blueayachan Version 1](https://github.com/electra13x7777/blueayachan)
-#### Date Last Updated: 12/25/2022
+#### Date Last Updated: 1/06/2023

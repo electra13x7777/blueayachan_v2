@@ -181,6 +181,83 @@ pub struct PicTimeout
     pub last_pic: NaiveDateTime,
 }
 
+#[derive(Insertable)]
+#[diesel(table_name = botchannels)]
+pub struct NewBotChannel<'a>
+{
+    pub channel_name: &'a str, // foreign_key from botchannels
+    pub channel_twitch_id: &'a str,
+    pub last_updated: &'a NaiveDateTime,
+}
+
+#[derive(Queryable, Selectable)]
+#[diesel(table_name = botchannels)]
+pub struct BotChannel
+{
+    pub id: i32,
+    pub channel_name: String, // foreign_key from botchannels
+    pub channel_twitch_id: String,
+    pub last_updated: NaiveDateTime,
+}
+
+#[derive(Insertable)]
+#[diesel(table_name = channelcommands)]
+pub struct NewChannelCommands<'a>
+{
+    //pub channel_twitch_id: &'a str, // foreign_key from botchannels
+    pub channel_bac_id: &'a i32,
+    pub command_id: &'a i32, // foreign_key from blueayacommands
+    pub is_active: &'a bool,
+    pub is_broadcaster_only: &'a bool,
+    pub is_mod_only: &'a bool,
+    pub has_timeout: &'a bool,
+    pub timeout_dur: &'a i32,
+    //pub num_used: &'a i32, // WILL PUT THIS IN ITS OWN TABLE
+    pub last_updated: &'a NaiveDateTime,
+}
+
+#[derive(Queryable, Selectable)]
+//#[primary_key(channel_bac_id, command_id)]
+#[diesel(table_name = channelcommands)]
+pub struct ChannelCommands
+{
+    pub id: i32,
+    //pub channel_twitch_id: String, // foreign_key from botchannels
+    pub channel_bac_id: i32,
+    pub command_id: i32, // foreign_key from blueayacommands
+    pub is_active: bool,
+    pub is_broadcaster_only: bool,
+    pub is_mod_only: bool,
+    pub has_timeout: bool,
+    pub timeout_dur: i32,
+    //pub num_used: i32,
+    pub last_updated: NaiveDateTime,
+}
+
+#[derive(Insertable)]
+#[diesel(table_name = commandtimeout)]
+pub struct NewCommandTimeout<'a>
+{
+    //pub channel_twitch_id: &'a str, // foreign_key from botchannels
+    //pub user_twitch_id: &'a str,
+    pub channel_bac_id: &'a i32,
+    pub user_bac_id: &'a i32,
+    pub command_id: &'a i32, // foreign_key from blueayacommands
+    pub last_command: &'a NaiveDateTime,
+}
+
+#[derive(Queryable, Selectable)]
+#[diesel(table_name = commandtimeout)]
+pub struct CommandTimeout
+{
+    pub id: i32,
+    //pub channel_twitch_id: String, // foreign_key from botchannels
+    //pub user_twitch_id: String,
+    pub channel_bac_id: i32,
+    pub user_bac_id: i32,
+    pub command_id: i32, // foreign_key from blueayacommands
+    pub last_command: NaiveDateTime,
+}
 
 // GENERATE DB ENDPOINTS
 macro_rules! generate_simple_db_structs
@@ -217,3 +294,4 @@ generate_simple_db_structs!(vsavs, New_Vsav, Vsav, 'a);
 generate_simple_db_structs!(jojos, New_Jojo, Jojo, 'a);
 generate_simple_db_structs!(millions, New_Millions, Millions, 'a);
 generate_simple_db_structs!(kinohackers, New_Kinohack, Kinohack, 'a);
+generate_simple_db_structs!(blueayacommands, New_BACommand, BACommand, 'a);

@@ -196,6 +196,8 @@ pub fn query_single_dbtweet(q_id: i32) -> String
     let result = dreamboumtweets.find(q_id).first::<DBTweet>(&mut connection).unwrap();
     return result.tweet;
 }
+
+
 /*
 pub async fn query_dbtweet_async(q_id: i32) -> String
 {
@@ -381,6 +383,343 @@ pub fn handle_pic_timeout(bacuser: BACUser, ndt_now: NaiveDateTime, timeout: i64
     }
 }
 
+////////////////////////////////////////////////////////////
+//                  BOT CHANNEL
+
+// ADD BOT TO CHANNEL
+pub fn insert_botchannel(user_nick_str: String) -> bool
+{
+    use crate::schema::botchannels::dsl::*;
+    let mut connection: PgConnection = establish_connection();
+    let channel_exists: bool = select(exists(botchannels.filter(channel_name.eq(&user_nick_str)))).get_result(&mut connection).unwrap();
+    if !channel_exists
+    {
+        let bacuser: BACUser = query_user_data(user_nick_str);
+        let ndt_now: NaiveDateTime = chrono::offset::Local::now().naive_local();
+        let new_channel = NewBotChannel{channel_name: &bacuser.user_nick, channel_twitch_id: &bacuser.twitch_id, last_updated: &ndt_now};
+        diesel::insert_into(botchannels)
+            .values(&new_channel)
+            .execute(&mut connection)
+            .expect("Error inserting new user");
+        return true;
+    }
+    return false;
+}
+
+// REMOVE BOT FROM CHANNEL
+
+//////////////////////////////////////////////////////////////
+//                  COMMAND ADMIN
+
+pub fn query_command_id(command_name_str: &str) -> Option<i32>
+{
+    use crate::schema::blueayacommands::dsl::*;
+    let mut connection: PgConnection = establish_connection();
+    let command_exists: bool = select(exists(blueayacommands.filter(name.eq(command_name_str)))).get_result(&mut connection).unwrap();
+    if !command_exists
+    {
+        return None;
+    }
+    else
+    {
+        let result = blueayacommands.filter(name.eq(&command_name_str)).first::<BACommand>(&mut connection).expect("Oh no!");
+        return Some(result.id);
+    }
+}
+
+// TODO: ADD DEFAULT INSERT FOR CHANNEL COMMANDS: SEE PICTIMEOUT
+pub fn insert_channel_command(bacchannel: BACUser, command_id_val: i32)
+{
+    use crate::schema::channelcommands::dsl::*;
+    let mut connection: PgConnection = establish_connection();
+    let nt_now: NaiveDateTime = chrono::offset::Local::now().naive_local();
+    let new_cc = NewChannelCommands
+    {
+        channel_bac_id: &bacchannel.id, command_id: &command_id_val,
+        is_active: &true, is_broadcaster_only: &false, is_mod_only: &false,
+        has_timeout: &false, timeout_dur: &30,/*num_used: &0,*/ last_updated: &nt_now
+    };
+    diesel::insert_into(channelcommands)
+            .values(&new_cc)
+            .execute(&mut connection)
+            .expect("Error inserting new user");
+}
+// CHANNEL COMMANDS
+// CONSTRAINT channelcommands_pkey PRIMARY KEY (channel_bac_id, command_id),
+//
+pub fn query_channel_command(bacchannel: BACUser, command_id_val: i32) -> Option<ChannelCommands>
+{
+    use crate::schema::channelcommands::dsl::*;
+    let mut connection: PgConnection = establish_connection();
+    let channel_command_exists: bool = select(exists(channelcommands.filter(channel_bac_id.eq(&bacchannel.id).and(command_id.eq(&command_id_val)))))
+    .get_result(&mut connection).unwrap();
+    if !channel_command_exists
+    {
+        // NEEDS TO INSERT A COMMAND WITH DEFAULT FIELDS
+        return None;
+    }
+    else
+    {
+        let result = channelcommands.filter(channel_bac_id.eq(&bacchannel.id).and(command_id.eq(&command_id_val))).first::<ChannelCommands>(&mut connection).expect("Error finding Channel Command");
+        return Some(result);
+    }
+}
+
+// SET CHANNEL COMMANDS
+// MUST BE BROADCASTER
+// ALL SUCCESSFUL RUNS WILL RETURN TRUE, FAILURE RETURNS FALSE
+
+pub fn set_channel_command_active(bacchannel: BACUser, command_id_val: i32) -> (bool, String)
+{
+    use crate::schema::channelcommands::dsl::*;
+    let ch_id = &bacchannel.id.clone();
+    let cmd_id = &command_id_val.clone();
+    let mut connection: PgConnection = establish_connection();
+    let cc = match query_channel_command(bacchannel, command_id_val)
+    {
+        Some(cc) => cc,
+        None => return (false, "Command not found".to_string())
+    };
+    let ndt_now: NaiveDateTime = chrono::offset::Local::now().naive_local();
+    if cc.is_active
+    {
+        return (false, "Command is already active".to_string());
+    }
+    diesel::update(channelcommands.filter(channel_bac_id.eq(&ch_id).and(command_id.eq(&cmd_id))))
+            .set((is_active.eq(true), last_updated.eq(&ndt_now),))
+            .execute(&mut connection).expect("Error updating channel command");
+    return (true, "set to active".to_string());
+}
+
+pub fn set_channel_command_inactive(bacchannel: BACUser, command_id_val: i32) -> (bool, String)
+{
+    use crate::schema::channelcommands::dsl::*;
+    let ch_id = &bacchannel.id.clone();
+    let cmd_id = &command_id_val.clone();
+    let mut connection: PgConnection = establish_connection();
+    let cc = match query_channel_command(bacchannel, command_id_val)
+    {
+        Some(cc) => cc,
+        None => return (false, "Command not found".to_string())
+    };
+    let ndt_now: NaiveDateTime = chrono::offset::Local::now().naive_local();
+    if !cc.is_active
+    {
+        return (false, "Command is already inactive".to_string());
+    }
+    diesel::update(channelcommands.filter(channel_bac_id.eq(&ch_id).and(command_id.eq(&cmd_id))))
+            .set((is_active.eq(false), last_updated.eq(&ndt_now),))
+            .execute(&mut connection).expect("Error updating channel command");
+    return (true, "set to inactive".to_string());
+}
+
+//THIS IS A TOGGLE
+pub fn toggle_channel_command_active(bacchannel: BACUser, command_id_val: i32) -> (bool, String)
+{
+    use crate::schema::channelcommands::dsl::*;
+    let ch_id = &bacchannel.id.clone();
+    let cmd_id = &command_id_val.clone();
+    let mut connection: PgConnection = establish_connection();
+    let cc = match query_channel_command(bacchannel, command_id_val)
+    {
+        Some(cc) => cc,
+        None => return (false, "Command not found".to_string())
+    };
+    let ndt_now: NaiveDateTime = chrono::offset::Local::now().naive_local();
+    if cc.is_active
+    {
+        diesel::update(channelcommands.filter(channel_bac_id.eq(&ch_id).and(command_id.eq(&cmd_id))))
+            .set((is_active.eq(false), last_updated.eq(&ndt_now),))
+            .execute(&mut connection).expect("Error updating channel command");
+        return (true, "set to inactive".to_string())
+    }
+    diesel::update(channelcommands.filter(channel_bac_id.eq(&ch_id).and(command_id.eq(&cmd_id))))
+            .set((is_active.eq(true), last_updated.eq(&ndt_now),))
+            .execute(&mut connection).expect("Error updating channel command");
+    return (true, "set to active".to_string());
+}
+
+pub fn set_channel_command_broadcaster_only(bacchannel: BACUser, command_id_val: i32) -> (bool, String)
+{
+    use crate::schema::channelcommands::dsl::*;
+    let ch_id = &bacchannel.id.clone();
+    let cmd_id = &command_id_val.clone();
+    let mut connection: PgConnection = establish_connection();
+    let cc = match query_channel_command(bacchannel, command_id_val)
+    {
+        Some(cc) => cc,
+        None => return (false, "could not find command".to_string())
+    };
+    let ndt_now: NaiveDateTime = chrono::offset::Local::now().naive_local();
+    diesel::update(channelcommands.filter(channel_bac_id.eq(&ch_id).and(command_id.eq(&cmd_id))))
+        .set((is_broadcaster_only.eq(true), is_mod_only.eq(false), last_updated.eq(&ndt_now),))
+        .execute(&mut connection).expect("Error updating channel command");
+    return (true, "set to broadcaster only".to_string());
+}
+
+pub fn set_channel_command_mod_only(bacchannel: BACUser, command_id_val: i32) -> (bool, String)
+{
+    use crate::schema::channelcommands::dsl::*;
+    let ch_id = &bacchannel.id.clone();
+    let cmd_id = &command_id_val.clone();
+    let mut connection: PgConnection = establish_connection();
+    let cc = match query_channel_command(bacchannel, command_id_val)
+    {
+        Some(cc) => cc,
+        None => return (false, "could not find command".to_string())
+    };
+    let ndt_now: NaiveDateTime = chrono::offset::Local::now().naive_local();
+    diesel::update(channelcommands.filter(channel_bac_id.eq(&ch_id).and(command_id.eq(&cmd_id))))
+        .set((is_broadcaster_only.eq(false), is_mod_only.eq(true), last_updated.eq(&ndt_now),))
+        .execute(&mut connection).expect("Error updating channel command");
+    return (true, "set to broadcaster, mod, vip only".to_string());
+}
+
+pub fn set_channel_command_all(bacchannel: BACUser, command_id_val: i32) -> (bool, String)
+{
+    use crate::schema::channelcommands::dsl::*;
+    let ch_id = &bacchannel.id.clone();
+    let cmd_id = &command_id_val.clone();
+    let mut connection: PgConnection = establish_connection();
+    let cc = match query_channel_command(bacchannel, command_id_val)
+    {
+        Some(cc) => cc,
+        None => return (false, "could not find command".to_string())
+    };
+    let ndt_now: NaiveDateTime = chrono::offset::Local::now().naive_local();
+    diesel::update(channelcommands.filter(channel_bac_id.eq(&ch_id).and(command_id.eq(&cmd_id))))
+        .set((is_broadcaster_only.eq(false), is_mod_only.eq(false), last_updated.eq(&ndt_now),))
+        .execute(&mut connection).expect("Error updating channel command");
+    return (true, "set to all users".to_string());
+}
+
+pub fn set_channel_command_timeout_on(bacchannel: BACUser, command_id_val: i32) -> (bool, String)
+{
+    use crate::schema::channelcommands::dsl::*;
+    let ch_id = &bacchannel.id.clone();
+    let cmd_id = &command_id_val.clone();
+    let mut connection: PgConnection = establish_connection();
+    let cc = match query_channel_command(bacchannel, command_id_val)
+    {
+        Some(cc) => cc,
+        None => return (false, "could not find command".to_string())
+    };
+    let ndt_now: NaiveDateTime = chrono::offset::Local::now().naive_local();
+    diesel::update(channelcommands.filter(channel_bac_id.eq(&ch_id).and(command_id.eq(&cmd_id))))
+        .set((has_timeout.eq(true), last_updated.eq(&ndt_now),))
+        .execute(&mut connection).expect("Error updating channel command");
+    return (true, "timeout enabled".to_string());
+}
+
+pub fn set_channel_command_timeout_off(bacchannel: BACUser, command_id_val: i32) -> (bool, String)
+{
+    use crate::schema::channelcommands::dsl::*;
+    let ch_id = &bacchannel.id.clone();
+    let cmd_id = &command_id_val.clone();
+    let mut connection: PgConnection = establish_connection();
+    let cc = match query_channel_command(bacchannel, command_id_val)
+    {
+        Some(cc) => cc,
+        None => return (false, "could not find command".to_string())
+    };
+    let ndt_now: NaiveDateTime = chrono::offset::Local::now().naive_local();
+    diesel::update(channelcommands.filter(channel_bac_id.eq(&ch_id).and(command_id.eq(&cmd_id))))
+        .set((has_timeout.eq(false), last_updated.eq(&ndt_now),))
+        .execute(&mut connection).expect("Error updating channel command");
+    return (true, "timeout disabled".to_string());
+}
+
+pub fn set_channel_command_timeout_duration(bacchannel: BACUser, command_id_val: i32, timeout_dur_val: i32) -> (bool, String)
+{
+    use crate::schema::channelcommands::dsl::*;
+    let ch_id = &bacchannel.id.clone();
+    let cmd_id = &command_id_val.clone();
+    let mut connection: PgConnection = establish_connection();
+    let cc = match query_channel_command(bacchannel, command_id_val)
+    {
+        Some(cc) => cc,
+        None => return (false, "could not find command".to_string())
+    };
+    let ndt_now: NaiveDateTime = chrono::offset::Local::now().naive_local();
+    diesel::update(channelcommands.filter(channel_bac_id.eq(&ch_id).and(command_id.eq(&cmd_id))))
+        .set((timeout_dur.eq(timeout_dur_val), last_updated.eq(&ndt_now),))
+        .execute(&mut connection).expect("Error updating channel command");
+    return (true, "timeout duration set".to_string());;
+}
+
+// COMMAND TIMEOUT
+// CONSTRAINT commandtimeout_pkey PRIMARY KEY (channel_bac_id, user_bac_id, command_id),-
+pub fn query_command_timeout(bacchannel: &BACUser, bacuser: &BACUser, command_id_val: i32) -> Option<CommandTimeout>
+{
+    use crate::schema::commandtimeout::dsl::*;
+    let mut connection: PgConnection = establish_connection();
+    let ct_exists: bool = select(exists(commandtimeout.filter(channel_bac_id.eq(&bacchannel.id).and(user_bac_id.eq(&bacuser.id).and(command_id.eq(&command_id_val))))))
+    .get_result(&mut connection).unwrap();
+
+    if !ct_exists
+    {
+        // WE WILL DO NOTHING
+
+        return None;
+    }
+    else
+    {
+        let result = commandtimeout.filter(channel_bac_id.eq(&bacchannel.id)
+            .and(user_bac_id.eq(&bacuser.id)
+            .and(command_id.eq(&command_id_val))))
+            .first::<CommandTimeout>(&mut connection).expect("Error finding ct");
+        return Some(result);
+    }
+}
+
+pub fn handle_command_timeout(bacchannel: BACUser, bacuser: BACUser, command_id_val: i32, ndt_now: NaiveDateTime, timeout: i32) -> (bool, i32)
+{
+    use crate::schema::commandtimeout::dsl::*;
+    let mut connection: PgConnection = establish_connection();
+    let channel_ct_exists: bool = select(exists(commandtimeout
+        .filter(channel_bac_id.eq(&bacchannel.id)
+        .and(user_bac_id.eq(&bacuser.id)
+        .and(command_id.eq(&command_id_val))))))
+        .get_result(&mut connection).unwrap();
+    if !channel_ct_exists
+    {
+        // set user timeout defaults
+        let cmd_id = &command_id_val.clone();
+        let nct = NewCommandTimeout
+        {
+            channel_bac_id: &bacchannel.id, user_bac_id: &bacuser.id, command_id: cmd_id, last_command: &ndt_now
+        };
+        // insert
+        diesel::insert_into(commandtimeout)
+            .values(&nct)
+            .execute(&mut connection)
+            .expect("Error inserting new user command timeout");
+        return (true, 0);
+    }
+    else
+    {
+
+        let ct = match query_command_timeout(&bacchannel, &bacuser, command_id_val.clone())
+        {
+            Some(ct) => ct,
+            None => panic!() // will never happen
+        };
+        let diff: i32 = ndt_now.signed_duration_since(ct.last_command).num_seconds().try_into().unwrap();
+        if diff >= timeout
+        {
+            diesel::update(commandtimeout
+                .filter(channel_bac_id.eq(&bacchannel.id)
+                .and(user_bac_id.eq(&bacuser.id)
+                .and(command_id.eq(&command_id_val)))))
+                .set(last_command.eq(&ndt_now))
+                .execute(&mut connection).expect("Error updating last command timestamp");
+            return (true, 0);
+        }
+        return (false, diff);
+    }
+}
+
+
 // INSERT SIMPLE STRING TO DATABASE
 macro_rules! insert_val_to_db
 {
@@ -411,6 +750,7 @@ insert_val_to_db!(vsavs, New_Vsav, insert_vsav);
 insert_val_to_db!(jojos, New_Jojo, insert_jojo);
 insert_val_to_db!(millions, New_Millions, insert_millions);
 insert_val_to_db!(kinohackers, New_Kinohack, insert_kinohack);
+insert_val_to_db!(blueayacommands, New_BACommand, insert_bacommand);
 
 // QUERY SIMPLE STRING FROM DATABASE
 macro_rules! query_string_simple
@@ -438,6 +778,7 @@ query_string_simple!(vsavs, Vsav, query_vsav);
 query_string_simple!(jojos, Jojo, query_jojo);
 query_string_simple!(millions, Millions, query_millions);
 query_string_simple!(kinohackers, Kinohack, query_kinohackers);
+query_string_simple!(blueayacommands, BACommand, query_bacommand);
 
 // GET TOTAL ITEMS IN TABLE
 macro_rules! query_count_simple
@@ -467,3 +808,19 @@ query_count_simple!(vsavs, get_vsav_count);
 query_count_simple!(jojos, get_jojo_count);
 query_count_simple!(millions, get_millions_count);
 query_count_simple!(kinohackers, get_kinohack_count);
+query_count_simple!(blueayacommands, get_command_count);
+
+pub fn query_cmd_to_vec() -> Vec<BACommand>
+{
+    use crate::schema::blueayacommands::dsl::*;
+    let mut connection: PgConnection = establish_connection();
+    let results = blueayacommands
+    .load::<BACommand>(&mut connection)
+    .expect("Error querying commands");
+    let mut out: Vec<BACommand> = Vec::new();
+    for cmd in results
+    {
+        out.push(cmd);
+    }
+    return out;
+}
