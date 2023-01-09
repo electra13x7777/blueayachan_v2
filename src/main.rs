@@ -1,3 +1,5 @@
+#![allow(nonstandard_style)]
+#![allow(clippy::needless_return, clippy::redundant_static_lifetimes)]
 /*
     FILE: main.rs
     AUTHOR(s): azuchang, electra_rta
@@ -11,13 +13,9 @@ use anyhow::Context;
 use std::
 {
     env,
-    time::Duration,
     collections::HashMap,
 };
-use chrono::
-{
-    NaiveDateTime,
-};
+
 use twitch_irc::
 {
     login::StaticLoginCredentials,
@@ -25,9 +23,8 @@ use twitch_irc::
     {
         PrivmsgMessage,
         ServerMessage,
-        RGBColor,
     },
-    ClientConfig, SecureTCPTransport, TwitchIRCClient,
+    ClientConfig,
 };
 use colored::*;
 
@@ -35,24 +32,21 @@ pub mod commands;
 use crate::commands::
 {
     Twitch_Client,
-    Callback,
     EventHandler,
-    Runtype,
 };
 pub mod cmds;
-use crate::cmds::*;
+
 
 pub mod helpers;
 use crate::helpers::readlines_to_vec;
-use crate::helpers::readlines_to_map;
+
 pub mod db_connect;
 pub mod models;
 pub mod schema;
 pub mod db_ops;
 //pub mod test_db_stuff;
-#[macro_use]
 extern crate diesel;
-use crate::db_ops::*;
+
 //use crate::test_db_stuff::test;
 
 #[tokio::main]
@@ -69,12 +63,13 @@ async fn main() -> anyhow::Result<()>
     //let channel = env::var("CHANNEL_NAME").context("missing CHANNEL_NAME environment variable")?;
     let channels = readlines_to_vec("assets/channels.txt").expect("Failed to read file");
     //let wink = env::var("WINK").context("missing CHANNEL_NAME environment variable")?;
-    let aya_vec = readlines_to_vec("assets/ayawink.txt");
-    let av_iter = aya_vec.iter();
-    for line in av_iter
+    if let Ok(aya_vec) = readlines_to_vec("assets/ayawink.txt")
     {
-        //let f_line = format!("{}\n", line);
-        println!("{}", format!("{:#?}", line));
+        for line in aya_vec
+        {
+            //let f_line = format!("{}\n", line);
+            println!("{}", line);
+        }
     }
 
     // TEMP SETUP COMMANDS
@@ -137,7 +132,7 @@ async fn main() -> anyhow::Result<()>
         while let Some(message) = incoming_messages.recv().await
         {
             // TODO: FIX MALFORMED TAG ERROR PROC
-            if let Ok(ServerMessage::Privmsg(msg)) = ServerMessage::try_from(message)
+            if let ServerMessage::Privmsg(msg) = message
             {
                 let dt_fmt = chrono::offset::Local::now().format("%H:%M:%S").to_string();
                 const COLOR_FLAG: bool = true;
@@ -166,7 +161,6 @@ async fn main() -> anyhow::Result<()>
                         println!("[{}] #{} <{}>: {}", dt_fmt.truecolor(138, 138, 138), msg.channel_login.truecolor(117, 97, 158), &msg.sender.name.truecolor(*r, *g, *b), msg.message_text)
                     },
                     false => println!("[{}] #{} <{}>: {}", dt_fmt, msg.channel_login, &msg.sender.name, msg.message_text),
-                    _ => panic!(),
                 }
                 handle_priv(clone.clone(), bot_username.clone(), msg, &handler).await;
             }
@@ -182,16 +176,16 @@ async fn main() -> anyhow::Result<()>
 }
 
 // Handle Commands
-async fn handle_priv(client: Twitch_Client, bot_username: String, msg: PrivmsgMessage, handler: &EventHandler)
+async fn handle_priv(client: Twitch_Client, _bot_username: String, msg: PrivmsgMessage, handler: &EventHandler)
 {
     //tracing::info!("Received message: {:#?}", msg);
 
-    if let Some(runtype) = commands::Runtype::try_from_msg(&msg.message_text)
+    if let Some(_runtype) = commands::Runtype::try_from_msg(&msg.message_text)
     {
         let mut proc_msg: String = msg.message_text.to_lowercase().clone();
         proc_msg = String::from(&proc_msg[1..]); // send the name forced lowercase for case insensitivity /*name.len()*/
         let text = proc_msg.as_str();
-        let (name_str, args_start) = match text.split_once(' ')
+        let (name_str, _args_start) = match text.split_once(' ')
         {
             Some((name_str, args_start)) => (name_str, args_start),
             None => (text, ""),

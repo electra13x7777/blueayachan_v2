@@ -1,31 +1,17 @@
-use anyhow::Context;
-use std::
-{
-    fs,
-    fs::File,
-    path::Path,
-    env,
-    time::Duration,
-    collections::HashMap,
-    io,
-    io::{prelude::*, BufReader, Write},
-    future::Future,
-    pin::Pin,
-};
+
+
 use rand::Rng;
-use chrono::NaiveDateTime;
+
 use twitch_irc::
 {
-    login::StaticLoginCredentials,
-    message::{PrivmsgMessage, ServerMessage},
-    ClientConfig, SecureTCPTransport, TwitchIRCClient,
+    message::{PrivmsgMessage},
 };
 
 use crate::helpers::readlines_to_vec;
 use crate::db_ops::*;
 use crate::models::*;
 
-pub async fn dreamboumtweet(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>//Option<String>//(String, String)
+pub async fn dreamboumtweet(runtype: u8, _msg_ctx: PrivmsgMessage) -> anyhow::Result<String>//Option<String>//(String, String)
 {
     //const TOTAL_TWEETS: usize = 6569;
     match runtype
@@ -34,7 +20,7 @@ pub async fn dreamboumtweet(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Res
         {
             let id: i32 = rand::thread_rng().gen_range(1..=get_dbt_count()).try_into().unwrap();
             let tweet_ctx = query_single_dbtweet(id);
-            return Ok(String::from(tweet_ctx));
+            return Ok(tweet_ctx);
         },
         b'?' =>
         {
@@ -44,8 +30,8 @@ pub async fn dreamboumtweet(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Res
         {
             let dbt_vec = readlines_to_vec("assets/dreamboum_tweets_10_05_2022.txt").expect("Could not load lines");
             let index = rand::thread_rng().gen_range(0..dbt_vec.len());
-            let splitpoint: usize = 13;
-            let length = dbt_vec[index].len();
+            let _splitpoint: usize = 13;
+            let _length = dbt_vec[index].len();
             let tweet_ctx: &str = &dbt_vec[index];
             return Ok(String::from(tweet_ctx));
         },
@@ -154,7 +140,7 @@ pub async fn savedemon(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<S
         b'?' =>
         {
 
-            return Ok(format!("This command saves the last demon you summoned with !demongacha."));
+            return Ok("This command saves the last demon you summoned with !demongacha.".to_string());
         },
         _ =>
         {
@@ -226,11 +212,11 @@ pub async fn melty(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<Strin
                 2 => "Full Moon",
                 _ => "",
             };
-            return Ok(format!("{} your new main in Melty Blood: Actress Again is {} {}!", msg_ctx.sender.name, moon.to_string(), queried_string));
+            return Ok(format!("{} your new main in Melty Blood: Actress Again is {} {}!", msg_ctx.sender.name, moon, queried_string));
         },
         b'?' =>
         {
-            return Ok(format!("This command gives you a brand new main for Melty Blood: Actress Again"));
+            return Ok("This command gives you a brand new main for Melty Blood: Actress Again".to_string());
         },
         _ => Ok(String::from("")),
     }
@@ -242,7 +228,7 @@ pub async fn chen(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String
     {
         b'!' =>
         {
-            let mut chen_str: (String, String) = match msg_ctx.channel_login.as_str() // will read from a database eventually
+            let chen_str: (String, String) = match msg_ctx.channel_login.as_str() // will read from a database eventually
             {
                 "claude" => (String::from("HONKHONK"), String::from("CirnoGenius")),
                 "blueayachan" => (String::from("saHonk"), String::from("CirnoGenius")),
@@ -251,7 +237,7 @@ pub async fn chen(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String
                 "crypton42" => (String::from("saHonk"), String::from("saHonk")),
                 _ => (String::from(""), String::from(""))
             };
-            if chen_str.0 == ""{return Ok(String::from(""))}
+            if chen_str.0.is_empty(){return Ok(String::from(""))}
             let chens: usize = rand::thread_rng().gen_range(0..=10);
             match chens
             {
@@ -277,7 +263,7 @@ pub async fn chen(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String
         },
         b'?' =>
         {
-            Ok(format!("This command gives you chens. Yay!"))
+            Ok("This command gives you chens. Yay!".to_string())
         },
         b'#' =>
         {
@@ -290,12 +276,12 @@ pub async fn chen(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String
                 "crypton42" => String::from("saHonk"),
                 _ => String::from("")
             };
-            if chen_str == ""{return Ok(String::from(""))}
+            if chen_str.is_empty(){return Ok(String::from(""))}
             let chens: usize = rand::thread_rng().gen_range(0..=10);
             match chens
             {
-                0 => return Ok(format!("0 chens :(")),
-                1 => return Ok(format!("{}", chen_str)),
+                0 => return Ok("0 chens :(".to_string()),
+                1 => return Ok(chen_str),
                 _ => chens
             };
             let mut new_chens: String = "".to_owned();
@@ -307,7 +293,7 @@ pub async fn chen(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String
                     new_chens += " ";
                 }
             }
-            Ok(format!("{}", new_chens))
+            Ok(new_chens.to_string())
         },
         _ => Ok(String::from("")),
     }

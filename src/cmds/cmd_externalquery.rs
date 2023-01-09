@@ -4,31 +4,21 @@
 use anyhow::Context;
 use std::
 {
-    fs,
-    fs::File,
-    path::Path,
     env,
-    time::Duration,
     collections::HashMap,
-    io,
-    io::{prelude::*, BufReader, Write},
-    future::Future,
-    pin::Pin,
 };
 use rand::Rng;
 use chrono::NaiveDateTime;
 use twitch_irc::
 {
-    login::StaticLoginCredentials,
-    message::{PrivmsgMessage, ServerMessage},
-    ClientConfig, SecureTCPTransport, TwitchIRCClient,
+    message::{PrivmsgMessage},
 };
-use crate::helpers::readlines_to_vec;
+
 use crate::db_ops::*;
 use crate::models::*;
-use serde::{Deserialize, Serialize};
-use serde_xml_rs::{from_str, to_string};
-use serde_json::{Result, Value};
+use serde::{Deserialize};
+
+use serde_json::{Value};
 
 // Comamand: !speedgame
 //
@@ -39,28 +29,26 @@ pub async fn query_srl(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<S
     {
         b'!' =>
         {
-            use rand::Rng;
-            let page_num: i32 = rand::thread_rng().gen_range(1..=6576).try_into().unwrap();
+            let page_num: i32 = rand::thread_rng().gen_range(1..=6576);
             let req_str = format!("https://www.speedrunslive.com/api/games?pageNumber={}&pageSize=1", page_num);
             let data = reqwest::get(req_str).await?.text().await?;
-            let mut results: HashMap<String, Value> = serde_json::from_str(&data).unwrap();
-            let mut game: String = format!("{}", &results["data"][0]["gameName"]);
-            return Ok(format!("{} your new speedgame is {}!", msg_ctx.sender.name, game.replace("\"", "")));
+            let results: HashMap<String, Value> = serde_json::from_str(&data).unwrap();
+            let game: String = format!("{}", &results["data"][0]["gameName"]);
+            return Ok(format!("{} your new speedgame is {}!", msg_ctx.sender.name, game.replace('\"', "")));
         },
         b'?' =>
         {
-            Ok(format!("This command queries a random speedgame using SRL\'s API. TOTAL_GAMES: 6576"))
+            Ok("This command queries a random speedgame using SRL\'s API. TOTAL_GAMES: 6576".to_string())
         },
         b'#' =>
         {
-            use rand::Rng;
-            let page_num: i32 = rand::thread_rng().gen_range(1..=6576).try_into().unwrap();
+            let page_num: i32 = rand::thread_rng().gen_range(1..=6576);
             let req_str = format!("https://www.speedrunslive.com/api/games?pageNumber={}&pageSize=1", page_num);
             let data = reqwest::get(req_str).await?.text().await?; // GET JaSON from
-            let mut results: HashMap<String, Value> = serde_json::from_str(&data).unwrap();
-            let mut game: String = format!("{}", &results["data"][0]["gameName"]);
+            let results: HashMap<String, Value> = serde_json::from_str(&data).unwrap();
+            let game: String = format!("{}", &results["data"][0]["gameName"]);
             let mut pop_string: String = format!("{}", &results["data"][0]["gamePopularity"]);
-            pop_string = pop_string.replace("\"", "");
+            pop_string = pop_string.replace('\"', "");
             let pop: f32 = pop_string.parse::<f32>().unwrap();
             let tenshi_quote: &str =
             if pop == 0.0{"Wow... no one plays this sh*t..."}
@@ -68,7 +56,7 @@ pub async fn query_srl(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<S
             else if pop >= 20.0{"Wow so popular! DataFace b"}
             else if pop < 20.0{"Holy cow someone has played this game!"}
             else{"Wow... no one plays this sh*t..."};
-            return Ok(format!("{} your new speedgame is {}! Its popularity rating on SRL is {} TenshiWow o O ( {} ) ", msg_ctx.sender.name, game.replace("\"", ""), pop, tenshi_quote));
+            return Ok(format!("{} your new speedgame is {}! Its popularity rating on SRL is {} TenshiWow o O ( {} ) ", msg_ctx.sender.name, game.replace('\"', ""), pop, tenshi_quote));
         },
         _ => Ok(String::from("")),
     }
@@ -115,7 +103,7 @@ pub async fn query_safebooru(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Re
         b'!' =>
         {
             let text = msg_ctx.message_text.as_str(); // get str from msg context
-            let (name, args) = match text.split_once(' ')
+            let (_name, args) = match text.split_once(' ')
             {
                 Some((name, args)) => (name, args),
                 None => (text, ""),
@@ -143,12 +131,12 @@ pub async fn query_safebooru(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Re
         },
         b'?' =>
         {
-            Ok(format!("This command queries an image from Safebooru. Use '*' to autocomplete a tag, a '+' to add an additional tag(s) to query with, or '-' to omit a tag from the search. | USAGE: !pic, !pic TAG, !pic TAG1+TAG2, !pic TAG1+...+TAGn, !pic TAG1+TAG2+-TAG3 | !pic shadow_h*from_*world+j*garland -> TAG1 = shadow_hearts_from_the_new_world, TAG2 = johnny_garland"))
+            Ok("This command queries an image from Safebooru. Use '*' to autocomplete a tag, a '+' to add an additional tag(s) to query with, or '-' to omit a tag from the search. | USAGE: !pic, !pic TAG, !pic TAG1+TAG2, !pic TAG1+...+TAGn, !pic TAG1+TAG2+-TAG3 | !pic shadow_h*from_*world+j*garland -> TAG1 = shadow_hearts_from_the_new_world, TAG2 = johnny_garland".to_string())
         },
         b'#' =>
         {
             let text = msg_ctx.message_text.as_str(); // get str from msg context
-            let (name, args) = match text.split_once(' ')
+            let (_name, args) = match text.split_once(' ')
             {
                 Some((name, args)) => (name, args),
                 None => (text, ""),

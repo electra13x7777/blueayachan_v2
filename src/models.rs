@@ -69,9 +69,9 @@ pub struct Role
 
 //#[diesel(belongs_to(i32, foreign_key = user_id))]
 //#[diesel(belongs_to(roles, foreign_key = role_id))]
+#[derive(Insertable, Associations)]
 #[diesel(belongs_to(BACUser, foreign_key = user_id))]
 #[diesel(belongs_to(Role, foreign_key = role_id))]
-#[derive(Insertable, Associations)]
 #[diesel(table_name = blueayachanuser_roles)]
 pub struct NewBAC_User_Role<'a>
 {
