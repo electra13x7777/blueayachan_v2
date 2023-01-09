@@ -1,8 +1,4 @@
 
-use std::
-{
-    io::{prelude::*},
-};
 use rand::Rng;
 
 use twitch_irc::
@@ -18,22 +14,12 @@ pub async fn range(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<Strin
 {
     fn arg_is_int(s: &String) -> bool
     {
-        let mut i: i32 = 0;
-        for c in s.chars()
+        for (i, c) in s.chars().enumerate()
         {
-            if !c.is_numeric() && c != '-'
+            if !c.is_numeric() && c != '-' || s.len() == 1 && !c.is_numeric() || i != 0 && !c.is_numeric()
             {
                 return false;
             }
-            else if s.len() == 1 && !c.is_numeric()
-            {
-                return false;
-            }
-            else if i != 0 && !c.is_numeric()
-            {
-                return false;
-            }
-            i+=1;
         }
         return true;
     }

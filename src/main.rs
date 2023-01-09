@@ -45,7 +45,6 @@ pub mod models;
 pub mod schema;
 pub mod db_ops;
 //pub mod test_db_stuff;
-#[macro_use]
 extern crate diesel;
 
 //use crate::test_db_stuff::test;
@@ -64,12 +63,13 @@ async fn main() -> anyhow::Result<()>
     //let channel = env::var("CHANNEL_NAME").context("missing CHANNEL_NAME environment variable")?;
     let channels = readlines_to_vec("assets/channels.txt").expect("Failed to read file");
     //let wink = env::var("WINK").context("missing CHANNEL_NAME environment variable")?;
-    let aya_vec = readlines_to_vec("assets/ayawink.txt");
-    let av_iter = aya_vec.iter();
-    for line in av_iter
+    if let Ok(aya_vec) = readlines_to_vec("assets/ayawink.txt")
     {
-        //let f_line = format!("{}\n", line);
-        println!("{}", format!("{:#?}", line));
+        for line in aya_vec
+        {
+            //let f_line = format!("{}\n", line);
+            println!("{}", line);
+        }
     }
 
     // TEMP SETUP COMMANDS
@@ -132,7 +132,7 @@ async fn main() -> anyhow::Result<()>
         while let Some(message) = incoming_messages.recv().await
         {
             // TODO: FIX MALFORMED TAG ERROR PROC
-            if let Ok(ServerMessage::Privmsg(msg)) = ServerMessage::try_from(message)
+            if let ServerMessage::Privmsg(msg) = message
             {
                 let dt_fmt = chrono::offset::Local::now().format("%H:%M:%S").to_string();
                 const COLOR_FLAG: bool = true;
@@ -161,7 +161,6 @@ async fn main() -> anyhow::Result<()>
                         println!("[{}] #{} <{}>: {}", dt_fmt.truecolor(138, 138, 138), msg.channel_login.truecolor(117, 97, 158), &msg.sender.name.truecolor(*r, *g, *b), msg.message_text)
                     },
                     false => println!("[{}] #{} <{}>: {}", dt_fmt, msg.channel_login, &msg.sender.name, msg.message_text),
-                    _ => panic!(),
                 }
                 handle_priv(clone.clone(), bot_username.clone(), msg, &handler).await;
             }

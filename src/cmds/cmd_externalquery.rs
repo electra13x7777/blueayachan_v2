@@ -29,8 +29,7 @@ pub async fn query_srl(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<S
     {
         b'!' =>
         {
-            use rand::Rng;
-            let page_num: i32 = rand::thread_rng().gen_range(1..=6576).try_into().unwrap();
+            let page_num: i32 = rand::thread_rng().gen_range(1..=6576);
             let req_str = format!("https://www.speedrunslive.com/api/games?pageNumber={}&pageSize=1", page_num);
             let data = reqwest::get(req_str).await?.text().await?;
             let results: HashMap<String, Value> = serde_json::from_str(&data).unwrap();
@@ -43,8 +42,7 @@ pub async fn query_srl(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<S
         },
         b'#' =>
         {
-            use rand::Rng;
-            let page_num: i32 = rand::thread_rng().gen_range(1..=6576).try_into().unwrap();
+            let page_num: i32 = rand::thread_rng().gen_range(1..=6576);
             let req_str = format!("https://www.speedrunslive.com/api/games?pageNumber={}&pageSize=1", page_num);
             let data = reqwest::get(req_str).await?.text().await?; // GET JaSON from
             let results: HashMap<String, Value> = serde_json::from_str(&data).unwrap();

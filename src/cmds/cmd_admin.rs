@@ -1,9 +1,4 @@
 
-use std::
-{
-    io::{prelude::*},
-};
-
 
 use twitch_irc::
 {
@@ -34,8 +29,7 @@ pub async fn set_command(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result
 {
     const ADMIN_CMDS: &'static [&'static str] = &["on", "off", "toggle", "timeout", "broadcaster", "mod", "all"];
     const ADMIN_CMDS_ALIAS: &'static [&'static str] = &["t", "me", "b", "m", "a"];
-    let badges: Vec<String> = msg_ctx.badges.iter().map(|b| b.name.clone()).collect();
-    if !badges.contains(&"broadcaster".to_string()) && &msg_ctx.sender.name.to_lowercase() != "electra_rta"
+    if !msg_ctx.badges.iter().any(|badge| badge.name == "broadcaster") && &msg_ctx.sender.name.to_lowercase() != "electra_rta"
     {
         return Ok(format!("{}, this is a broadcaster only command!", msg_ctx.sender.name));
     }
@@ -58,7 +52,7 @@ pub async fn set_command(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result
             // CHECK COMMAND NAME
             for c in cmds
             {
-                if &c.name == &argv_s[0]
+                if c.name == argv_s[0]
                 {
                     is_valid_cmd = true;
                     id_val = c.id;
@@ -202,8 +196,7 @@ pub async fn set_command(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result
 // TOGGLE COMMAND - turns a command on or off
 pub async fn toggle_command(_runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
 {
-    let badges: Vec<String> = msg_ctx.badges.iter().map(|b| b.name.clone()).collect();
-    if !badges.contains(&"broadcaster".to_string())
+    if !msg_ctx.badges.iter().any(|badge| badge.name == "broadcaster")
     {
         return Ok(format!("{}, this is a broadcaster only command!", msg_ctx.sender.name));
     }

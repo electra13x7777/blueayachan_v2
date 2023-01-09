@@ -64,11 +64,13 @@ pub fn handle_bac_user_in_db(user_nick_str: String, twitch_id_str: String)
             diesel::update(blueayachanuser
                 .filter(user_nick.eq(&user_nick_lower)))
                 .set(twitch_id.eq(twitch_id_str))
-                .execute(&mut connection);
+                .execute(&mut connection)
+                .expect("Error updating user");
         }
         let _updated_row = diesel::update(blueayachanuser.filter(user_nick.eq(user_nick_lower)))
             .set(num_commands.eq(num_commands+1))
-            .execute(&mut connection);
+            .execute(&mut connection)
+            .expect("Error incrementing commands");
     }
 }
 //pub fn handle_id(){}
@@ -641,7 +643,7 @@ pub fn set_channel_command_timeout_duration(bacchannel: BACUser, command_id_val:
     diesel::update(channelcommands.filter(channel_bac_id.eq(&ch_id).and(command_id.eq(&cmd_id))))
         .set((timeout_dur.eq(timeout_dur_val), last_updated.eq(&ndt_now),))
         .execute(&mut connection).expect("Error updating channel command");
-    return (true, "timeout duration set".to_string());;
+    return (true, "timeout duration set".to_string());
 }
 
 // COMMAND TIMEOUT
