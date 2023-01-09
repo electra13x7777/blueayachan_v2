@@ -6,14 +6,11 @@
 */
 use std::
 {
-    fs,
     fs::File,
     path::Path,
-    env,
-    time::Duration,
     collections::HashMap,
     io,
-    io::{prelude::*, BufReader, Write},
+    io::{prelude::*, BufReader},
 };
 
 // TYPEOF //
@@ -36,7 +33,7 @@ pub fn readlines_to_map(filename: impl AsRef<Path>) -> io::Result<HashMap<String
     let br = BufReader::new(File::open(filename)?);
     for line in br.lines()
     {
-        if let Some((key, val)) = line.expect("Cannot Read Line").split_once(",")
+        if let Some((key, val)) = line.expect("Cannot Read Line").split_once(',')
         {
             res.insert(key.to_string(), val.to_string());
         }

@@ -20,16 +20,13 @@ use diesel::pg::PgConnection;
 use diesel::dsl::
 {
     //now,
-    count,
-    sum,
     exists
 };
 use chrono::
 {
-    DateTime,
     NaiveDateTime
 };
-use diesel::sql_query;
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //                           USER, ROLES, USERROLES                          //
@@ -69,7 +66,7 @@ pub fn handle_bac_user_in_db(user_nick_str: String, twitch_id_str: String)
                 .set(twitch_id.eq(twitch_id_str))
                 .execute(&mut connection);
         }
-        let updated_row = diesel::update(blueayachanuser.filter(user_nick.eq(user_nick_lower)))
+        let _updated_row = diesel::update(blueayachanuser.filter(user_nick.eq(user_nick_lower)))
             .set(num_commands.eq(num_commands+1))
             .execute(&mut connection);
     }
@@ -257,7 +254,7 @@ pub fn handle_user_last_demon(bacuser: BACUser, demon: &NDemon, rarity: &i32)
         let new_bac_user_demon = New_SavedNDemon
         {
             user_id: &bacuser.id, saved_demon_id: &sd_id, saved_demon_rarity: &sd_r,
-            last_demon_id: &ld_id, last_demon_rarity: &ld_r
+            last_demon_id: ld_id, last_demon_rarity: ld_r
         };
         // insert
         diesel::insert_into(bac_user_demons)
@@ -545,7 +542,7 @@ pub fn set_channel_command_broadcaster_only(bacchannel: BACUser, command_id_val:
     let ch_id = &bacchannel.id.clone();
     let cmd_id = &command_id_val.clone();
     let mut connection: PgConnection = establish_connection();
-    let cc = match query_channel_command(bacchannel, command_id_val)
+    let _cc = match query_channel_command(bacchannel, command_id_val)
     {
         Some(cc) => cc,
         None => return (false, "could not find command".to_string())
@@ -563,7 +560,7 @@ pub fn set_channel_command_mod_only(bacchannel: BACUser, command_id_val: i32) ->
     let ch_id = &bacchannel.id.clone();
     let cmd_id = &command_id_val.clone();
     let mut connection: PgConnection = establish_connection();
-    let cc = match query_channel_command(bacchannel, command_id_val)
+    let _cc = match query_channel_command(bacchannel, command_id_val)
     {
         Some(cc) => cc,
         None => return (false, "could not find command".to_string())
@@ -581,7 +578,7 @@ pub fn set_channel_command_all(bacchannel: BACUser, command_id_val: i32) -> (boo
     let ch_id = &bacchannel.id.clone();
     let cmd_id = &command_id_val.clone();
     let mut connection: PgConnection = establish_connection();
-    let cc = match query_channel_command(bacchannel, command_id_val)
+    let _cc = match query_channel_command(bacchannel, command_id_val)
     {
         Some(cc) => cc,
         None => return (false, "could not find command".to_string())
@@ -599,7 +596,7 @@ pub fn set_channel_command_timeout_on(bacchannel: BACUser, command_id_val: i32) 
     let ch_id = &bacchannel.id.clone();
     let cmd_id = &command_id_val.clone();
     let mut connection: PgConnection = establish_connection();
-    let cc = match query_channel_command(bacchannel, command_id_val)
+    let _cc = match query_channel_command(bacchannel, command_id_val)
     {
         Some(cc) => cc,
         None => return (false, "could not find command".to_string())
@@ -617,7 +614,7 @@ pub fn set_channel_command_timeout_off(bacchannel: BACUser, command_id_val: i32)
     let ch_id = &bacchannel.id.clone();
     let cmd_id = &command_id_val.clone();
     let mut connection: PgConnection = establish_connection();
-    let cc = match query_channel_command(bacchannel, command_id_val)
+    let _cc = match query_channel_command(bacchannel, command_id_val)
     {
         Some(cc) => cc,
         None => return (false, "could not find command".to_string())
@@ -635,7 +632,7 @@ pub fn set_channel_command_timeout_duration(bacchannel: BACUser, command_id_val:
     let ch_id = &bacchannel.id.clone();
     let cmd_id = &command_id_val.clone();
     let mut connection: PgConnection = establish_connection();
-    let cc = match query_channel_command(bacchannel, command_id_val)
+    let _cc = match query_channel_command(bacchannel, command_id_val)
     {
         Some(cc) => cc,
         None => return (false, "could not find command".to_string())
@@ -699,7 +696,7 @@ pub fn handle_command_timeout(bacchannel: BACUser, bacuser: BACUser, command_id_
     else
     {
 
-        let ct = match query_command_timeout(&bacchannel, &bacuser, command_id_val.clone())
+        let ct = match query_command_timeout(&bacchannel, &bacuser, command_id_val)
         {
             Some(ct) => ct,
             None => panic!() // will never happen

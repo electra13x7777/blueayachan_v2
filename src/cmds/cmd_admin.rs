@@ -1,27 +1,16 @@
-use anyhow::Context;
+
 use std::
 {
-    fs,
-    fs::File,
-    path::Path,
-    env,
-    time::Duration,
-    collections::HashMap,
-    io,
-    io::{prelude::*, BufReader, Write},
-    future::Future,
-    pin::Pin,
-};
-use rand::Rng;
-use chrono::NaiveDateTime;
-use twitch_irc::
-{
-    login::StaticLoginCredentials,
-    message::{PrivmsgMessage, ServerMessage},
-    ClientConfig, SecureTCPTransport, TwitchIRCClient,
+    io::{prelude::*},
 };
 
-use crate::helpers::readlines_to_vec;
+
+use twitch_irc::
+{
+    message::{PrivmsgMessage},
+};
+
+
 use crate::db_ops::*;
 use crate::models::*;
 
@@ -55,7 +44,7 @@ pub async fn set_command(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result
         b'!' =>
         {
             let text = msg_ctx.message_text.as_str(); // get str from msg context
-            let (name, args) = match text.split_once(' ')
+            let (_name, args) = match text.split_once(' ')
             {
                 Some((name, args)) => (name, args),
                 None => (text, ""),
@@ -90,8 +79,8 @@ pub async fn set_command(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result
                     let res: (bool, String) = set_channel_command_active(bacchannel, id_val);
                     match res.0
                     {
-                        true => {return Ok(format!("{}", res.1));},
-                        false => {return Ok(format!("{}", res.1));},
+                        true => {return Ok(res.1);},
+                        false => {return Ok(res.1);},
                     }
                 },
                 "off" =>
@@ -99,8 +88,8 @@ pub async fn set_command(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result
                     let res: (bool, String) = set_channel_command_inactive(bacchannel, id_val);
                     match res.0
                     {
-                        true => {return Ok(format!("{}", res.1));},
-                        false => {return Ok(format!("{}", res.1));},
+                        true => {return Ok(res.1);},
+                        false => {return Ok(res.1);},
                     }
                 },
                 "toggle" =>
@@ -108,8 +97,8 @@ pub async fn set_command(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result
                     let res: (bool, String) = toggle_channel_command_active(bacchannel, id_val);
                     match res.0
                     {
-                        true => {return Ok(format!("{}", res.1));},
-                        false => {return Ok(format!("{}", res.1));},
+                        true => {return Ok(res.1);},
+                        false => {return Ok(res.1);},
                     }
                 }
                 // TIMEOUT REQUIRES A 3RD POSITIONAL ARGUMENT
@@ -136,11 +125,11 @@ pub async fn set_command(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result
                         let res: (bool, String) = set_channel_command_timeout_off(bacchannel, id_val);
                         match res.0
                         {
-                            true => {return Ok(format!("{}", res.1));},
-                            false => {return Ok(format!("{}", res.1));},
+                            true => {return Ok(res.1);},
+                            false => {return Ok(res.1);},
                         }
                     }
-                    let to_res: (bool, String) = set_channel_command_timeout_on(bacchannel, id_val.clone());
+                    let to_res: (bool, String) = set_channel_command_timeout_on(bacchannel, id_val);
                     match to_res.0
                     {
                         true =>
@@ -148,8 +137,8 @@ pub async fn set_command(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result
                             let dur_res: (bool, String) = set_channel_command_timeout_duration(query_user_data(msg_ctx.channel_login.clone()), id_val, timeout_val);
                             match dur_res.0
                             {
-                                true => {return Ok(format!("{}", dur_res.1));},
-                                false => {return Ok(format!("{}", dur_res.1));},
+                                true => {return Ok(dur_res.1);},
+                                false => {return Ok(dur_res.1);},
                             }
                         },
                         false =>
@@ -157,8 +146,8 @@ pub async fn set_command(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result
                             let dur_res: (bool, String) = set_channel_command_timeout_duration(query_user_data(msg_ctx.channel_login.clone()), id_val, timeout_val);
                             match dur_res.0
                             {
-                                true => {return Ok(format!("{}", dur_res.1));},
-                                false => {return Ok(format!("{}", dur_res.1));},
+                                true => {return Ok(dur_res.1);},
+                                false => {return Ok(dur_res.1);},
                             }
                         },
                     }
@@ -168,8 +157,8 @@ pub async fn set_command(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result
                     let res: (bool, String) = set_channel_command_broadcaster_only(bacchannel, id_val);
                     match res.0
                     {
-                        true => {return Ok(format!("{}", res.1));},
-                        false => {return Ok(format!("{}", res.1));},
+                        true => {return Ok(res.1);},
+                        false => {return Ok(res.1);},
                     }
                 },
                 "mod" | "m" =>
@@ -177,8 +166,8 @@ pub async fn set_command(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result
                     let res: (bool, String) = set_channel_command_mod_only(bacchannel, id_val);
                     match res.0
                     {
-                        true => {return Ok(format!("{}", res.1));},
-                        false => {return Ok(format!("{}", res.1));},
+                        true => {return Ok(res.1);},
+                        false => {return Ok(res.1);},
                     }
                 },
                 "all" | "a" =>
@@ -186,19 +175,19 @@ pub async fn set_command(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result
                     let res: (bool, String) = set_channel_command_all(bacchannel, id_val);
                     match res.0
                     {
-                        true => {return Ok(format!("{}", res.1));},
-                        false => {return Ok(format!("{}", res.1));},
+                        true => {return Ok(res.1);},
+                        false => {return Ok(res.1);},
                     }
                 },
                 _ =>
                 {
-                    return Ok(format!("Invalid command op used!"));
+                    return Ok("Invalid command op used!".to_string());
                 },
             }
         },
         b'?' =>
         {
-            return Ok(format!("This command sets the privilages and timeouts of a given command for a channel. It can only be used by the channel owner. Please refer to this pastebin for a full list of supported use cases: https://pastebin.com/z6zxSiB5"));
+            return Ok("This command sets the privilages and timeouts of a given command for a channel. It can only be used by the channel owner. Please refer to this pastebin for a full list of supported use cases: https://pastebin.com/z6zxSiB5".to_string());
         },
         b'#' =>
         {
@@ -211,7 +200,7 @@ pub async fn set_command(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result
 // TODO: REMOVE FUNCTIONS BELOW
 
 // TOGGLE COMMAND - turns a command on or off
-pub async fn toggle_command(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+pub async fn toggle_command(_runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
 {
     let badges: Vec<String> = msg_ctx.badges.iter().map(|b| b.name.clone()).collect();
     if !badges.contains(&"broadcaster".to_string())
@@ -222,14 +211,14 @@ pub async fn toggle_command(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Res
 }
 
 // TOGGLE COMMAND TIMEOUT - turns the timeout of a command on or off
-pub async fn toggle_command_timeout(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+pub async fn toggle_command_timeout(_runtype: u8, _msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
 {
     return Ok(String::from(""));
 }
 
 //     CHANGE COMMAND TIMEOUT <INT> - changes the timeout value in seconds of a command in the channel
 //                                  - if the user inputs 0 then it turns off the timeout by default
-pub async fn change_command_timeout(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+pub async fn change_command_timeout(_runtype: u8, _msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
 {
     return Ok(String::from(""));
 }

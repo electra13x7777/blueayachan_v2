@@ -1,29 +1,18 @@
-use anyhow::Context;
+
 use std::
 {
-    fs,
-    fs::File,
-    path::Path,
-    env,
-    time::Duration,
-    collections::HashMap,
-    io,
-    io::{prelude::*, BufReader, Write},
-    future::Future,
-    pin::Pin,
+    io::{prelude::*},
 };
 use rand::Rng;
-use chrono::NaiveDateTime;
+
 use twitch_irc::
 {
-    login::StaticLoginCredentials,
-    message::{PrivmsgMessage, ServerMessage},
-    ClientConfig, SecureTCPTransport, TwitchIRCClient,
+    message::{PrivmsgMessage},
 };
 
 use crate::helpers::readlines_to_vec;
 use crate::db_ops::*;
-use crate::models::*;
+
 
 pub async fn range(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
 {
@@ -54,7 +43,7 @@ pub async fn range(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<Strin
         {
             const I64LEN: usize = "9223372036854775807".len();
             let text = msg_ctx.message_text.as_str();
-            let (name, args) = match text.split_once(' ')
+            let (_name, args) = match text.split_once(' ')
             {
                 Some((name, args)) => (name, args),
                 None => (text, ""),
@@ -62,13 +51,13 @@ pub async fn range(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<Strin
 
             let argv_s: Vec<String> = args.split(' ').map(|s| s.to_string()).collect();
             // check arg count
-            if argv_s.len() != 2{return Ok(format!("Bad argument count! Please make sure your command follows this syntax: !range INT1 INT2"));}
+            if argv_s.len() != 2{return Ok("Bad argument count! Please make sure your command follows this syntax: !range INT1 INT2".to_string());}
             // check if int
-            if !arg_is_int(&argv_s[0]) || !arg_is_int(&argv_s[1]){return Ok(format!("Bad argument found! Please make sure you are providing INTEGERS as arguments. Ex) 1000, -500, 69, -420"));}
+            if !arg_is_int(&argv_s[0]) || !arg_is_int(&argv_s[1]){return Ok("Bad argument found! Please make sure you are providing INTEGERS as arguments. Ex) 1000, -500, 69, -420".to_string());}
             // check input string length
             if argv_s[0].len() >= I64LEN || argv_s[1].len() >= I64LEN
             {
-                return Ok(format!("One or more of the arguments provided are not only above 32 bits, they are also above max signed 64bit integer bounds..."));
+                return Ok("One or more of the arguments provided are not only above 32 bits, they are also above max signed 64bit integer bounds...".to_string());
             }
             let mut argv: Vec<i64> = vec![argv_s[0].parse::<i64>().unwrap(), argv_s[1].parse::<i64>().unwrap()];
             if argv[0] >= i32::MAX.into() || argv[0] <= i32::MIN.into()
@@ -86,7 +75,7 @@ pub async fn range(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<Strin
         },
         b'?' =>
         {
-            Ok(format!("This command picks a random 32 bit integer in a given range. Use whitespace to separate the numbers. | USAGE: !range INT1 INT2 | !range INT2 INT1 -> swaps larger and smaller to make it easy to use. NOTE: Range command is INCLUSIVE of the upperbound"))
+            Ok("This command picks a random 32 bit integer in a given range. Use whitespace to separate the numbers. | USAGE: !range INT1 INT2 | !range INT2 INT1 -> swaps larger and smaller to make it easy to use. NOTE: Range command is INCLUSIVE of the upperbound".to_string())
         },
         _ => Ok(String::from("")),
     }
@@ -99,7 +88,7 @@ pub async fn pick(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String
         b'!' =>
         {
             let text = msg_ctx.message_text.as_str(); // get str from msg context
-            let (name, args) = match text.split_once(' ')
+            let (_name, args) = match text.split_once(' ')
             {
                 Some((name, args)) => (name, args),
                 None => (text, ""),
@@ -113,13 +102,13 @@ pub async fn pick(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String
         },
         b'?' =>
         {
-            Ok(format!("This command picks a single argument from input provided via message. Use whitespace to make another argument for the bot to pick from (will be better in the future) | USAGE: !pick, !pick ARG, !pick ARG1 ARG2, !pick ARG1 ... ARGn |"))
+            Ok("This command picks a single argument from input provided via message. Use whitespace to make another argument for the bot to pick from (will be better in the future) | USAGE: !pick, !pick ARG, !pick ARG1 ARG2, !pick ARG1 ... ARGn |".to_string())
         },
         _ => Ok(String::from("")),
     }
 }
 
-pub async fn is_hentai(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+pub async fn is_hentai(runtype: u8, _msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
 {
     match runtype
     {
@@ -127,12 +116,12 @@ pub async fn is_hentai(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<S
         {
             let out: Vec<&str> = vec!("This game is hentai DataSweat", "This game is NOT hentai YoumuAngry", "This game could possibly be hentai, but more testing is needed MarisaFace");
             let index: usize = rand::thread_rng().gen_range(0..out.len());
-            Ok(format!("{}", out[index]))
+            Ok(out[index].to_string())
 
         },
         b'?' =>
         {
-            Ok(format!("This command lets the bot decide if any content on the stream contains hentai. NOTE: The author of this command does not guarantee its reliability..."))
+            Ok("This command lets the bot decide if any content on the stream contains hentai. NOTE: The author of this command does not guarantee its reliability...".to_string())
         },
         _ => Ok(String::from("")),
     }
@@ -140,7 +129,7 @@ pub async fn is_hentai(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<S
 
 
 
-pub async fn cfb(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+pub async fn cfb(runtype: u8, _msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
 {
     match runtype
     {
@@ -156,13 +145,13 @@ pub async fn cfb(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
         },
         b'?' =>
         {
-            Ok(format!("This command generates a string containing words that start with C, F, and B"))
+            Ok("This command generates a string containing words that start with C, F, and B".to_string())
         },
         _ => Ok(String::from("")),
     }
 }
 
-pub async fn kinohackers(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+pub async fn kinohackers(runtype: u8, _msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
 {
     match runtype
     {
@@ -170,11 +159,11 @@ pub async fn kinohackers(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result
         {
             let id: i32 = rand::thread_rng().gen_range(1..=get_kinohack_count()).try_into().unwrap();
             let queried_link: String = query_kinohackers(id);
-            return Ok(format!("{}", queried_link));
+            return Ok(queried_link);
         },
         b'?' =>
         {
-            return Ok(format!("This command gives you a brand kinohackers meme made by various members of the Claude influencer circle"));
+            return Ok("This command gives you a brand kinohackers meme made by various members of the Claude influencer circle".to_string());
         },
         _ => Ok(String::from("")),
     }
@@ -186,23 +175,23 @@ pub async fn strive(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<Stri
     {
         b'!' =>
         {
-            return Ok(format!("😆 👉 STRIVE"));
+            return Ok("😆 👉 STRIVE".to_string());
         },
         b'?' =>
         {
-            return Ok(format!("GGSTRIVE4EVER... For '#' runtype: #strive <chatter>"));
+            return Ok("GGSTRIVE4EVER... For '#' runtype: #strive <chatter>".to_string());
         },
         b'#' =>
         {
             let text = msg_ctx.message_text.as_str(); // get str from msg context
-            let (name, args) = match text.split_once(' ')
+            let (_name, args) = match text.split_once(' ')
             {
                 Some((name, args)) => (name, args),
                 None => (text, ""),
             };
             let argv_s: Vec<String> = args.split(' ').map(|s| s.to_string()).collect();
             // check arg count
-            if argv_s.len() != 1{return Ok(format!("Bad argument count! Please make sure your command follows this syntax: #strive <chatter>"));}
+            if argv_s.len() != 1{return Ok("Bad argument count! Please make sure your command follows this syntax: #strive <chatter>".to_string());}
             return Ok(format!("{} accuses {} of being a Strive player!!!", msg_ctx.sender.name, argv_s[0]));
         },
         _ => Ok(String::from("")),
@@ -219,7 +208,7 @@ pub async fn shftnw(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<Stri
         },
         b'?' =>
         {
-            return Ok(format!("This is the worlds most useless command"));
+            return Ok("This is the worlds most useless command".to_string());
         },
         _ => Ok(String::from("")),
     }
@@ -231,7 +220,7 @@ macro_rules! generate_simple_command
 {
     ($fn_name:ident, $text:literal) =>
     {
-        pub async fn $fn_name(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+        pub async fn $fn_name(runtype: u8, _msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
         {
             match runtype
             {
