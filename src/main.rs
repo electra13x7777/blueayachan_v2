@@ -123,7 +123,7 @@ async fn main() -> anyhow::Result<()>
     handler.add_command(String::from("iloveshadowhearts:fromthenewworld"), cmds::cmd_misc::shftnw);
 
     let config =
-    ClientConfig::new_simple(StaticLoginCredentials::new(bot_username.clone(), Some(oauth_token)));
+    ClientConfig::new_simple(StaticLoginCredentials::new(bot_username, Some(oauth_token)));
     let (mut incoming_messages, client) = Twitch_Client::new(config);
 
     let clone = client.clone();
@@ -162,7 +162,7 @@ async fn main() -> anyhow::Result<()>
                     },
                     false => println!("[{}] #{} <{}>: {}", dt_fmt, msg.channel_login, &msg.sender.name, msg.message_text),
                 }
-                handle_priv(clone.clone(), bot_username.clone(), msg, &handler).await;
+                handle_priv(clone.clone(), msg, &handler).await;
             }
         }
     });
@@ -176,13 +176,13 @@ async fn main() -> anyhow::Result<()>
 }
 
 // Handle Commands
-async fn handle_priv(client: Twitch_Client, _bot_username: String, msg: PrivmsgMessage, handler: &EventHandler)
+async fn handle_priv(client: Twitch_Client, msg: PrivmsgMessage, handler: &EventHandler)
 {
     //tracing::info!("Received message: {:#?}", msg);
 
     if let Some(_runtype) = commands::Runtype::try_from_msg(&msg.message_text)
     {
-        let mut proc_msg: String = msg.message_text.to_lowercase().clone();
+        let mut proc_msg: String = msg.message_text.to_lowercase();
         proc_msg = String::from(&proc_msg[1..]); // send the name forced lowercase for case insensitivity /*name.len()*/
         let text = proc_msg.as_str();
         let (name_str, _args_start) = match text.split_once(' ')

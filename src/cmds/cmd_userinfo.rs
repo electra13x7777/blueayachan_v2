@@ -13,7 +13,7 @@ use crate::models::*;
 
 pub async fn me(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
 {
-    let user_data: BACUser = query_user_data(msg_ctx.sender.name.to_lowercase());
+    let user_data: BACUser = query_user_data(&msg_ctx.sender.name);
     match runtype
     {
         b'!' =>

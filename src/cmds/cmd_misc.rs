@@ -12,7 +12,7 @@ use crate::db_ops::*;
 
 pub async fn range(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
 {
-    fn arg_is_int(s: &String) -> bool
+    fn arg_is_int(s: &str) -> bool
     {
         for (i, c) in s.chars().enumerate()
         {
@@ -35,17 +35,17 @@ pub async fn range(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<Strin
                 None => (text, ""),
             };
 
-            let argv_s: Vec<String> = args.split(' ').map(|s| s.to_string()).collect();
+            let argv_s: Vec<&str> = args.split(' ').collect();
             // check arg count
             if argv_s.len() != 2{return Ok("Bad argument count! Please make sure your command follows this syntax: !range INT1 INT2".to_string());}
             // check if int
-            if !arg_is_int(&argv_s[0]) || !arg_is_int(&argv_s[1]){return Ok("Bad argument found! Please make sure you are providing INTEGERS as arguments. Ex) 1000, -500, 69, -420".to_string());}
+            if !arg_is_int(argv_s[0]) || !arg_is_int(argv_s[1]){return Ok("Bad argument found! Please make sure you are providing INTEGERS as arguments. Ex) 1000, -500, 69, -420".to_string());}
             // check input string length
             if argv_s[0].len() >= I64LEN || argv_s[1].len() >= I64LEN
             {
                 return Ok("One or more of the arguments provided are not only above 32 bits, they are also above max signed 64bit integer bounds...".to_string());
             }
-            let mut argv: Vec<i64> = vec![argv_s[0].parse::<i64>().unwrap(), argv_s[1].parse::<i64>().unwrap()];
+            let argv: &mut [i64] = &mut [argv_s[0].parse::<i64>().unwrap(), argv_s[1].parse::<i64>().unwrap()];
             if argv[0] >= i32::MAX.into() || argv[0] <= i32::MIN.into()
             {
                 return Ok(format!("Make sure the first argument provided is no greater than {} and no less than {}", i32::MAX, i32::MIN));
@@ -80,7 +80,7 @@ pub async fn pick(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String
                 None => (text, ""),
             };
             // should we ever want to refactor to have whitespace split the 2 tag arguments
-            let argv: Vec<String> = args.split(' ').map(|s| s.to_string()).collect();
+            let argv: Vec<&str> = args.split(' ').collect();
             //args.split_whitespace().collect();//::<Vec<String>>();//.join("+")
             let index: usize = rand::thread_rng().gen_range(0..argv.len());
             Ok(format!("picks {}", argv[index]))
@@ -100,7 +100,7 @@ pub async fn is_hentai(runtype: u8, _msg_ctx: PrivmsgMessage) -> anyhow::Result<
     {
         b'!' =>
         {
-            let out: Vec<&str> = vec!("This game is hentai DataSweat", "This game is NOT hentai YoumuAngry", "This game could possibly be hentai, but more testing is needed MarisaFace");
+            let out: &[&str] = &["This game is hentai DataSweat", "This game is NOT hentai YoumuAngry", "This game could possibly be hentai, but more testing is needed MarisaFace"];
             let index: usize = rand::thread_rng().gen_range(0..out.len());
             Ok(out[index].to_string())
 
@@ -175,7 +175,7 @@ pub async fn strive(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<Stri
                 Some((name, args)) => (name, args),
                 None => (text, ""),
             };
-            let argv_s: Vec<String> = args.split(' ').map(|s| s.to_string()).collect();
+            let argv_s: Vec<&str> = args.split(' ').collect();
             // check arg count
             if argv_s.len() != 1{return Ok("Bad argument count! Please make sure your command follows this syntax: #strive <chatter>".to_string());}
             return Ok(format!("{} accuses {} of being a Strive player!!!", msg_ctx.sender.name, argv_s[0]));
