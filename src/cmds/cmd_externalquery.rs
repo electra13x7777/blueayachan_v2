@@ -46,8 +46,8 @@ pub async fn query_srl(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<S
             let req_str = format!("https://www.speedrunslive.com/api/games?pageNumber={}&pageSize=1", page_num);
             let data = reqwest::get(req_str).await?.text().await?; // GET JaSON from
             let results: HashMap<String, Value> = serde_json::from_str(&data).unwrap();
-            let game: String = format!("{}", &results["data"][0]["gameName"]);
-            let mut pop_string: String = format!("{}", &results["data"][0]["gamePopularity"]);
+            let game: String = results["data"][0]["gameName"].to_string();
+            let mut pop_string: String = results["data"][0]["gamePopularity"].to_string();
             pop_string = pop_string.replace('\"', "");
             let pop: f32 = pop_string.parse::<f32>().unwrap();
             let tenshi_quote: &str =
@@ -90,8 +90,8 @@ pub async fn query_safebooru(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Re
 
     if CHANNEL_FILTER && MOD_ONLY.contains(&msg_ctx.channel_login.as_str())
     {
-        let badges: Vec<String> = msg_ctx.badges.iter().map(|b| b.name.clone()).collect();
-        if !badges.contains(&"moderator".to_string()) && !badges.contains(&"broadcaster".to_string()) && !badges.contains(&"vip".to_string())
+        let badges: Vec<&str> = msg_ctx.badges.iter().map(|b| b.name.as_str()).collect();
+        if !badges.contains(&"moderator") && !badges.contains(&"broadcaster") && !badges.contains(&"vip")
         {
             return Ok(format!("This command is not available to non-mods in {}\'s channel. Sorry {}", msg_ctx.channel_login, msg_ctx.sender.name));
         }
@@ -119,8 +119,8 @@ pub async fn query_safebooru(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Re
             if HAS_TIMEOUT
             {
                 let ndt_now: NaiveDateTime = chrono::offset::Local::now().naive_local();
-                let bacuser: BACUser = query_user_data(msg_ctx.sender.name.to_lowercase());
-                let timeout_out: (bool, i64) = handle_pic_timeout(bacuser, ndt_now, TIMEOUT_DIFF);
+                let bacuser: BACUser = query_user_data(&msg_ctx.sender.name);
+                let timeout_out: (bool, i64) = handle_pic_timeout(&bacuser, ndt_now, TIMEOUT_DIFF);
                 if !timeout_out.0 // User has not waited for the timeout length
                 {
                     return Ok(format!("{}, please wait for {} more second(s)", msg_ctx.sender.name, TIMEOUT_DIFF - timeout_out.1))
@@ -152,8 +152,8 @@ pub async fn query_safebooru(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Re
             if HAS_TIMEOUT
             {
                 let ndt_now: NaiveDateTime = chrono::offset::Local::now().naive_local();
-                let bacuser: BACUser = query_user_data(msg_ctx.sender.name.to_lowercase());
-                let timeout_out: (bool, i64) = handle_pic_timeout(bacuser, ndt_now, TIMEOUT_DIFF);
+                let bacuser: BACUser = query_user_data(&msg_ctx.sender.name);
+                let timeout_out: (bool, i64) = handle_pic_timeout(&bacuser, ndt_now, TIMEOUT_DIFF);
                 if !timeout_out.0 // User has not waited for the timeout length
                 {
                     return Ok(format!("{}, please wait for {} more second(s)", msg_ctx.sender.name, TIMEOUT_DIFF - timeout_out.1))

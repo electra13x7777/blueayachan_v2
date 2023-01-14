@@ -87,9 +87,9 @@ pub async fn demongacha(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<
 
             // HANDLE AUX DB STUFF
             // TODO: CHANGE THIS TO QUERY BY ID
-            let bacuser: BACUser = query_user_data(msg_ctx.sender.name.to_lowercase());
+            let bacuser: BACUser = query_user_data(&msg_ctx.sender.name);
             //let name = demon.demon_name;
-            handle_user_last_demon(bacuser, &demon, &rarity);
+            handle_user_last_demon(&bacuser, &demon, rarity);
             if &demon.demon_name == "Kusi Mitama"
             {
                 return Ok(format!("{} summoned a {}⭐ NAME_CENSORED_BY_TWITCH_POLICE Mitama! {}", msg_ctx.sender.name, rarity, demon.demon_img_link));
@@ -105,7 +105,7 @@ pub async fn demongacha(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<
         b'#' =>
         {
             // TODO: need to check for no table entry
-            let bacuser: BACUser = query_user_data(msg_ctx.sender.name.to_lowercase());
+            let bacuser: BACUser = query_user_data(&msg_ctx.sender.name);
             let sud = match query_user_demon(&bacuser)
             {
                 // HANDLE SOME (GOOD DATA)
@@ -133,8 +133,8 @@ pub async fn savedemon(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<S
     {
         b'!' =>
         {
-            let bacuser: BACUser = query_user_data(msg_ctx.sender.name.to_lowercase());
-            save_user_demon(bacuser);
+            let bacuser: BACUser = query_user_data(&msg_ctx.sender.name);
+            save_user_demon(&bacuser);
             return Ok(format!("{} saved their last demon", msg_ctx.sender.name));
         },
         b'?' =>
@@ -235,15 +235,14 @@ pub async fn chen(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String
                 "darko_rta" => (String::from("saHonk"), String::from("CirnoGenius")),
                 "electra_rta" => (String::from("saHonk"), String::from("CirnoGenius")),
                 "crypton42" => (String::from("saHonk"), String::from("saHonk")),
-                _ => (String::from(""), String::from(""))
+                _ => return Ok(String::from("")),
             };
-            if chen_str.0.is_empty(){return Ok(String::from(""))}
             let chens: usize = rand::thread_rng().gen_range(0..=10);
             match chens
             {
                 0 => return Ok(format!("{}... got 0 chens :(", msg_ctx.sender.name)),
                 1 => return Ok(format!("{} got {} chen. {}",  msg_ctx.sender.name, chens, chen_str.0)),
-                _ => chens
+                _ => {}
             };
             let mut new_chens: String = "".to_owned();
             for i in 1..=chens
@@ -274,9 +273,8 @@ pub async fn chen(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String
                 "darko_rta" => String::from("saHonk"),
                 "electra_rta" => String::from("saHonk"),
                 "crypton42" => String::from("saHonk"),
-                _ => String::from("")
+                _ => return Ok(String::from("")),
             };
-            if chen_str.is_empty(){return Ok(String::from(""))}
             let chens: usize = rand::thread_rng().gen_range(0..=10);
             match chens
             {
@@ -293,7 +291,7 @@ pub async fn chen(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String
                     new_chens += " ";
                 }
             }
-            Ok(new_chens.to_string())
+            Ok(new_chens)
         },
         _ => Ok(String::from("")),
     }

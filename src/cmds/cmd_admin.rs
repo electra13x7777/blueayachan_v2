@@ -43,7 +43,7 @@ pub async fn set_command(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result
                 Some((name, args)) => (name, args),
                 None => (text, ""),
             };
-            let argv_s: Vec<String> = args.split(' ').map(|s| s.to_string()).collect();
+            let argv_s: Vec<&str> = args.split(' ').collect();
             // validate
             // check input 1
             let cmds: Vec<BACommand> = query_cmd_to_vec();
@@ -60,17 +60,17 @@ pub async fn set_command(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result
             }
             if !is_valid_cmd{return Ok(String::from("Invalid Command. ARG1"));}
             // CHECK COMMAND OP
-            if !ADMIN_CMDS.contains(&argv_s[1].as_str()) && !ADMIN_CMDS_ALIAS.contains(&argv_s[1].as_str())
+            if !ADMIN_CMDS.contains(&argv_s[1]) && !ADMIN_CMDS_ALIAS.contains(&argv_s[1])
             {
                 return Ok(String::from("Invalid Command Op. ARG2"));
             }
             // maybe check arg count?
-            let bacchannel: BACUser = query_user_data(msg_ctx.channel_login.clone());
-            match argv_s[1].as_str()
+            let bacchannel: BACUser = query_user_data(&msg_ctx.channel_login);
+            match argv_s[1]
             {
                 "on" =>
                 {
-                    let res: (bool, String) = set_channel_command_active(bacchannel, id_val);
+                    let res: (bool, String) = set_channel_command_active(&bacchannel, id_val);
                     match res.0
                     {
                         true => {return Ok(res.1);},
@@ -79,7 +79,7 @@ pub async fn set_command(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result
                 },
                 "off" =>
                 {
-                    let res: (bool, String) = set_channel_command_inactive(bacchannel, id_val);
+                    let res: (bool, String) = set_channel_command_inactive(&bacchannel, id_val);
                     match res.0
                     {
                         true => {return Ok(res.1);},
@@ -88,7 +88,7 @@ pub async fn set_command(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result
                 },
                 "toggle" =>
                 {
-                    let res: (bool, String) = toggle_channel_command_active(bacchannel, id_val);
+                    let res: (bool, String) = toggle_channel_command_active(&bacchannel, id_val);
                     match res.0
                     {
                         true => {return Ok(res.1);},
@@ -116,19 +116,19 @@ pub async fn set_command(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result
                     if timeout_val == 0
                     {
                         //let res_dur: (bool, String) = set_channel_command_timeout_duration(timeout_val);
-                        let res: (bool, String) = set_channel_command_timeout_off(bacchannel, id_val);
+                        let res: (bool, String) = set_channel_command_timeout_off(&bacchannel, id_val);
                         match res.0
                         {
                             true => {return Ok(res.1);},
                             false => {return Ok(res.1);},
                         }
                     }
-                    let to_res: (bool, String) = set_channel_command_timeout_on(bacchannel, id_val);
+                    let to_res: (bool, String) = set_channel_command_timeout_on(&bacchannel, id_val);
                     match to_res.0
                     {
                         true =>
                         {
-                            let dur_res: (bool, String) = set_channel_command_timeout_duration(query_user_data(msg_ctx.channel_login.clone()), id_val, timeout_val);
+                            let dur_res: (bool, String) = set_channel_command_timeout_duration(&query_user_data(&msg_ctx.channel_login), id_val, timeout_val);
                             match dur_res.0
                             {
                                 true => {return Ok(dur_res.1);},
@@ -137,7 +137,7 @@ pub async fn set_command(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result
                         },
                         false =>
                         {
-                            let dur_res: (bool, String) = set_channel_command_timeout_duration(query_user_data(msg_ctx.channel_login.clone()), id_val, timeout_val);
+                            let dur_res: (bool, String) = set_channel_command_timeout_duration(&query_user_data(&msg_ctx.channel_login), id_val, timeout_val);
                             match dur_res.0
                             {
                                 true => {return Ok(dur_res.1);},
@@ -148,7 +148,7 @@ pub async fn set_command(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result
                 },
                 "broadcaster" | "b" =>
                 {
-                    let res: (bool, String) = set_channel_command_broadcaster_only(bacchannel, id_val);
+                    let res: (bool, String) = set_channel_command_broadcaster_only(&bacchannel, id_val);
                     match res.0
                     {
                         true => {return Ok(res.1);},
@@ -157,7 +157,7 @@ pub async fn set_command(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result
                 },
                 "mod" | "m" =>
                 {
-                    let res: (bool, String) = set_channel_command_mod_only(bacchannel, id_val);
+                    let res: (bool, String) = set_channel_command_mod_only(&bacchannel, id_val);
                     match res.0
                     {
                         true => {return Ok(res.1);},
@@ -166,7 +166,7 @@ pub async fn set_command(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result
                 },
                 "all" | "a" =>
                 {
-                    let res: (bool, String) = set_channel_command_all(bacchannel, id_val);
+                    let res: (bool, String) = set_channel_command_all(&bacchannel, id_val);
                     match res.0
                     {
                         true => {return Ok(res.1);},

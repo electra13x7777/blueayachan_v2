@@ -77,7 +77,7 @@ impl EventHandler
         let mut io_flag: (bool, String) = (false, "".to_string());
         if self.command_map.contains_key(&name)
         {
-            handle_bac_user_in_db(msg_ctx.sender.name.clone(), msg_ctx.sender.id.clone()); // Updates user database
+            handle_bac_user_in_db(&msg_ctx.sender.name, &msg_ctx.sender.id); // Updates user database
             // TODO: check if command is allowed in channel
             //let cmd_name = &name.clone();
             let cmd_id: i32 = query_command_id(&name).unwrap_or(0);
@@ -87,23 +87,23 @@ impl EventHandler
                 //let bacchannel: BACUser = query_user_data(msg_ctx.channel_login.clone());
                 // IF WE FIND A CHANNEL COMMAND ENTRY HANDLE IT
                 // IF WE DON'T FIND ONE INSERT IT THEN IGNORE AND CONTINUE
-                if let Some(cc) = query_channel_command(query_user_data(msg_ctx.channel_login.clone()), cmd_id)
+                if let Some(cc) = query_channel_command(&query_user_data(&msg_ctx.channel_login), cmd_id)
                 {
-                    let bacuser: BACUser = query_user_data(msg_ctx.sender.name.clone());
+                    let bacuser: BACUser = query_user_data(&msg_ctx.sender.name);
                     // COMMAND IS INACTIVE
                     if !cc.is_active && !io_flag.0
                     {
                         io_flag.0 = !io_flag.0;
                         io_flag.1 = format!("This command is not available in {}\'s channel. Sorry {}", msg_ctx.channel_login, msg_ctx.sender.name);
                     }
-                    let badges: Vec<String> = msg_ctx.badges.iter().map(|b| b.name.clone()).collect();
+                    let badges: Vec<&str> = msg_ctx.badges.iter().map(|b| b.name.as_str()).collect();
                     // COMMAND IS BROADCASTER ONLY
-                    if cc.is_broadcaster_only && !io_flag.0 && !badges.contains(&"broadcaster".to_string()) {
+                    if cc.is_broadcaster_only && !io_flag.0 && !badges.contains(&"broadcaster") {
                         io_flag.0 = !io_flag.0;
                         io_flag.1 = format!("This command is not available only to Broadcasters in {}\'s channel. Sorry {}", msg_ctx.channel_login, msg_ctx.sender.name);
                     }
                     // COMMAND IS BROADCASTER, MOD, VIP ONLY
-                    if cc.is_mod_only && !io_flag.0 && !badges.contains(&"broadcaster".to_string()) && !badges.contains(&"moderator".to_string()) && !badges.contains(&"vip".to_string()) {
+                    if cc.is_mod_only && !io_flag.0 && !badges.contains(&"broadcaster") && !badges.contains(&"moderator") && !badges.contains(&"vip") {
                         io_flag.0 = !io_flag.0;
                         io_flag.1 = format!("This command is not available to non-mods in {}\'s channel. Sorry {}", msg_ctx.channel_login, msg_ctx.sender.name);
                     }
@@ -115,7 +115,7 @@ impl EventHandler
                     if cc.has_timeout
                     {
                         let ndt_now: NaiveDateTime = chrono::offset::Local::now().naive_local();
-                        let timeout_out: (bool, i32) = handle_command_timeout(query_user_data(msg_ctx.channel_login.clone()), bacuser, cmd_id, ndt_now, cc.timeout_dur);
+                        let timeout_out: (bool, i32) = handle_command_timeout(&query_user_data(&msg_ctx.channel_login), &bacuser, cmd_id, ndt_now, cc.timeout_dur);
                         if !timeout_out.0 // User has not waited for the timeout length
                         {
                             io_flag.0 = !io_flag.0;
@@ -125,8 +125,8 @@ impl EventHandler
                 }
                 else // VALIDATED
                 {
-                    let bac_channel = query_user_data(msg_ctx.channel_login.clone());
-                    insert_channel_command(bac_channel, cmd_id);
+                    let bac_channel = query_user_data(&msg_ctx.channel_login);
+                    insert_channel_command(&bac_channel, cmd_id);
                 }
             }
 
@@ -134,7 +134,7 @@ impl EventHandler
             if !io_flag.0
             {
                 const COMMAND_INDEX: usize = 0;
-                let runtype: u8 = msg_ctx.message_text.clone().as_bytes()[COMMAND_INDEX]; // gets a byte literal (Ex. b'!')
+                let runtype: u8 = msg_ctx.message_text.as_bytes()[COMMAND_INDEX]; // gets a byte literal (Ex. b'!')
                 let callback = self.command_map.get(&name).expect("Could not execute function pointer!");
                 let res = callback(runtype, msg_ctx.clone()).await.unwrap();
                 if res.is_empty(){return Ok(());} // if we have nothing to send skip the send
@@ -143,7 +143,7 @@ impl EventHandler
                     true => println!("[{}] #{} <{}>: {}", dt_fmt.truecolor(138, 138, 138), msg_ctx.channel_login.truecolor(117, 97, 158), self.bot_nick.red(), res),
                     false => println!("[{}] #{} <{}>: {}", dt_fmt, msg_ctx.channel_login, self.bot_nick, res),
                 }
-                client.say(msg_ctx.channel_login.clone(), res.to_string()).await?;
+                client.say(msg_ctx.channel_login, res).await?;
             }
             else
             {
@@ -152,7 +152,7 @@ impl EventHandler
                     true => println!("[{}] #{} <{}>: {}", dt_fmt.truecolor(138, 138, 138), msg_ctx.channel_login.truecolor(117, 97, 158), self.bot_nick.red(), io_flag.1),
                     false => println!("[{}] #{} <{}>: {}", dt_fmt, msg_ctx.channel_login, self.bot_nick, io_flag.1),
                 }
-                client.say(msg_ctx.channel_login.clone(), io_flag.1.to_string()).await?;
+                client.say(msg_ctx.channel_login, io_flag.1).await?;
             }
 
         }
@@ -166,9 +166,9 @@ impl EventHandler
         if self.command_map.contains_key(&name)
         {
             // TODO: check if command is allowed in channel
-            handle_bac_user_in_db(msg.sender.name.clone(), msg.sender.id.clone()); // Updates user database
+            handle_bac_user_in_db(&msg.sender.name, &msg.sender.id); // Updates user database
             const COMMAND_INDEX: usize = 0;
-            let runtype: u8 = msg.message_text.clone().as_bytes()[COMMAND_INDEX]; // gets a byte literal (Ex. b'!')
+            let runtype: u8 = msg.message_text.as_bytes()[COMMAND_INDEX]; // gets a byte literal (Ex. b'!')
             let callback = self.command_map.get(&name).expect("Could not execute function pointer!");
             let res = callback(runtype, msg.clone()).await.unwrap();
             if res.is_empty(){return Ok(());} // if we have nothing to send skip the send
@@ -179,7 +179,7 @@ impl EventHandler
                 true => println!("[{}] #{} <{}>: {}", dt_fmt.truecolor(138, 138, 138), msg.channel_login.truecolor(117, 97, 158), self.bot_nick.red(), res),
                 false => println!("[{}] #{} <{}>: {}", dt_fmt, msg.channel_login, self.bot_nick, res),
             }
-            client.say(msg.channel_login.clone(), res.to_string()).await?;
+            client.say(msg.channel_login, res).await?;
         }
         Ok(())
     }
