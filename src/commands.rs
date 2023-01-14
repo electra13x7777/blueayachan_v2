@@ -74,6 +74,7 @@ impl EventHandler
     {
         const COLOR_FLAG: bool = true;
         //const TRACK_CC: bool = true;
+        let mut is_pic: bool = false;
         let mut io_flag: (bool, String) = (false, "".to_string());
         if self.command_map.contains_key(&name)
         {
@@ -109,7 +110,8 @@ impl EventHandler
                     }
                     if cmd_id == 7 // SKIP PIC COMMAND FOR NOW
                     {
-                        io_flag.0 = true;
+                        is_pic = true;
+                        //io_flag.0 = true;
                     }
                     // CHECK FOR TIMEOUT
                     if cc.has_timeout
@@ -131,7 +133,7 @@ impl EventHandler
             }
 
             let dt_fmt = chrono::offset::Local::now().format("%H:%M:%S").to_string();
-            if !io_flag.0
+            if !io_flag.0 || is_pic
             {
                 const COMMAND_INDEX: usize = 0;
                 let runtype: u8 = msg_ctx.message_text.as_bytes()[COMMAND_INDEX]; // gets a byte literal (Ex. b'!')
