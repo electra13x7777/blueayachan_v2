@@ -33,7 +33,7 @@ pub async fn query_srl(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<S
             let req_str = format!("https://www.speedrunslive.com/api/games?pageNumber={}&pageSize=1", page_num);
             let data = reqwest::get(req_str).await?.text().await?;
             let results: HashMap<String, Value> = serde_json::from_str(&data).unwrap();
-            let game: String = format!("{}", &results["data"][0]["gameName"]);
+            let game: String = results["data"][0]["gameName"].to_string();
             return Ok(format!("{} your new speedgame is {}!", msg_ctx.sender.name, game.replace('\"', "")));
         },
         b'?' =>
@@ -51,11 +51,10 @@ pub async fn query_srl(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<S
             pop_string = pop_string.replace('\"', "");
             let pop: f32 = pop_string.parse::<f32>().unwrap();
             let tenshi_quote: &str =
-            if pop == 0.0{"Wow... no one plays this sh*t..."}
-            else if pop >= 100.0{"...insane popularity! CirnoGenius 🤝 SomaCruzFromAriaOfSorrow"}
-            else if pop >= 20.0{"Wow so popular! DataFace b"}
+            if pop <= 0.0{"Wow... no one plays this sh*t..."}
             else if pop < 20.0{"Holy cow someone has played this game!"}
-            else{"Wow... no one plays this sh*t..."};
+            else if pop < 100.0{"Wow so popular! DataFace b"}
+            else {"...insane popularity! CirnoGenius 🤝 SomaCruzFromAriaOfSorrow"};
             return Ok(format!("{} your new speedgame is {}! Its popularity rating on SRL is {} TenshiWow o O ( {} ) ", msg_ctx.sender.name, game.replace('\"', ""), pop, tenshi_quote));
         },
         _ => Ok(String::from("")),

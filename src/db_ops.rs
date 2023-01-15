@@ -326,60 +326,43 @@ pub fn query_pic_timeout(bacuser: &BACUser) -> Option<PicTimeout>
 {
     use crate::schema::pictimeout::dsl::*;
     let mut connection: PgConnection = establish_connection();
-    let user_exists: bool = select(exists(pictimeout.filter(user_id.eq(&bacuser.id))))
-    .get_result(&mut connection).unwrap();
-
-    if !user_exists
-    {
-        // WE WILL DO NOTHING
-
-        return None;
-    }
-    else
-    {
-        let result = pictimeout.filter(user_id.eq(&bacuser.id)).first::<PicTimeout>(&mut connection).expect("Error finding user");
-        return Some(result);
-    }
+    let result = pictimeout.filter(user_id.eq(&bacuser.id)).first::<PicTimeout>(&mut connection).optional().expect("Error finding user");
+    return result;
 }
 
 pub fn handle_pic_timeout(bacuser: &BACUser, ndt_now: NaiveDateTime, timeout: i64) -> (bool, i64)
 {
     use crate::schema::pictimeout::dsl::*;
     let mut connection: PgConnection = establish_connection();
-    let user_exists: bool = select(exists(pictimeout.filter(user_id.eq(&bacuser.id))))
-    .get_result(&mut connection).unwrap();
-    if !user_exists
+    match query_pic_timeout(bacuser)
     {
-        // set user timeout defaults
-        let npt = NewPicTimeout
+        Some(pt) =>
         {
-            user_id: bacuser.id, last_pic: ndt_now
-        };
-        // insert
-        diesel::insert_into(pictimeout)
-            .values(&npt)
-            .execute(&mut connection)
-            .expect("Error inserting new user pic timeout");
-        return (true, 0);
-    }
-    else
-    {
-        
-        let pt = match query_pic_timeout(bacuser)
+            let diff: i64 = ndt_now.signed_duration_since(pt.last_pic).num_seconds();
+            if diff >= timeout
+            {
+                diesel::update(pictimeout.filter(user_id.eq(&bacuser.id)))
+                    .set(last_pic.eq(&ndt_now))
+                    .execute(&mut connection).expect("Error updating last pic timestamp");
+                return (true, 0);
+            }
+            return (false, diff);
+        },
+        None =>
         {
-            Some(pt) => pt,
-            None => panic!() // will never happen
-        };
-        let diff: i64 = ndt_now.signed_duration_since(pt.last_pic).num_seconds();
-        if diff >= timeout
-        {
-            diesel::update(pictimeout.filter(user_id.eq(&bacuser.id)))
-                .set(last_pic.eq(&ndt_now))
-                .execute(&mut connection).expect("Error updating last pic timestamp");
+            // set user timeout defaults
+            let npt = NewPicTimeout
+            {
+                user_id: bacuser.id, last_pic: ndt_now
+            };
+            // insert
+            diesel::insert_into(pictimeout)
+                .values(&npt)
+                .execute(&mut connection)
+                .expect("Error inserting new user pic timeout");
             return (true, 0);
         }
-        return (false, diff);
-    }
+    };
 }
 
 ////////////////////////////////////////////////////////////
@@ -675,45 +658,37 @@ pub fn handle_command_timeout(bacchannel: &BACUser, bacuser: &BACUser, command_i
 {
     use crate::schema::commandtimeout::dsl::*;
     let mut connection: PgConnection = establish_connection();
-    let channel_ct_exists: bool = select(exists(commandtimeout
-        .filter(channel_bac_id.eq(&bacchannel.id)
-        .and(user_bac_id.eq(&bacuser.id)
-        .and(command_id.eq(&command_id_val))))))
-        .get_result(&mut connection).unwrap();
-    if !channel_ct_exists
+    match query_command_timeout(bacchannel, bacuser, command_id_val)
     {
-        // set user timeout defaults
-        let nct = NewCommandTimeout
+        Some(ct) =>
         {
-            channel_bac_id: bacchannel.id, user_bac_id: bacuser.id, command_id: command_id_val, last_command: ndt_now
-        };
-        // insert
-        diesel::insert_into(commandtimeout)
-            .values(&nct)
-            .execute(&mut connection)
-            .expect("Error inserting new user command timeout");
-        return (true, 0);
-    }
-    else
-    {
-
-        let ct = match query_command_timeout(bacchannel, bacuser, command_id_val)
+            let diff: i32 = ndt_now.signed_duration_since(ct.last_command).num_seconds().try_into().unwrap();
+            if diff >= timeout
+            {
+                diesel::update(commandtimeout
+                    .filter(channel_bac_id.eq(&bacchannel.id)
+                    .and(user_bac_id.eq(&bacuser.id)
+                    .and(command_id.eq(&command_id_val)))))
+                    .set(last_command.eq(&ndt_now))
+                    .execute(&mut connection).expect("Error updating last command timestamp");
+                return (true, 0);
+            }
+            return (false, diff);
+        },
+        None =>
         {
-            Some(ct) => ct,
-            None => panic!() // will never happen
-        };
-        let diff: i32 = ndt_now.signed_duration_since(ct.last_command).num_seconds().try_into().unwrap();
-        if diff >= timeout
-        {
-            diesel::update(commandtimeout
-                .filter(channel_bac_id.eq(&bacchannel.id)
-                .and(user_bac_id.eq(&bacuser.id)
-                .and(command_id.eq(&command_id_val)))))
-                .set(last_command.eq(&ndt_now))
-                .execute(&mut connection).expect("Error updating last command timestamp");
+            // set user timeout defaults
+            let nct = NewCommandTimeout
+            {
+                channel_bac_id: bacchannel.id, user_bac_id: bacuser.id, command_id: command_id_val, last_command: ndt_now
+            };
+            // insert
+            diesel::insert_into(commandtimeout)
+                .values(&nct)
+                .execute(&mut connection)
+                .expect("Error inserting new user command timeout");
             return (true, 0);
         }
-        return (false, diff);
     }
 }
 

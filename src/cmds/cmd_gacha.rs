@@ -1,6 +1,6 @@
 
 
-use rand::Rng;
+use rand::{Rng, seq::SliceRandom};
 
 use twitch_irc::
 {
@@ -204,14 +204,7 @@ pub async fn melty(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<Strin
         {
             let id: i32 = rand::thread_rng().gen_range(1..=get_melty_count()).try_into().unwrap();
             let queried_string: String = query_melty(id);
-            let moonstyle_r: i8 = rand::thread_rng().gen_range(0..3);
-            let moon: &str = match moonstyle_r
-            {
-                0 => "Crescent Moon",
-                1 => "Half Moon",
-                2 => "Full Moon",
-                _ => "",
-            };
+            let moon: &str = ["Crescent Moon", "Half Moon", "Full Moon"].choose(&mut rand::thread_rng()).unwrap();
             return Ok(format!("{} your new main in Melty Blood: Actress Again is {} {}!", msg_ctx.sender.name, moon, queried_string));
         },
         b'?' =>
