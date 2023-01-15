@@ -10,7 +10,7 @@ use crate::models::*;
 
 pub async fn me(runtype: Runtype, command: Command) -> anyhow::Result<String>
 {
-    let user_data: BACUser = query_user_data(&command.msg.sender.name.to_lowercase());
+    let user_data: BACUser = query_user_data(&command.msg.sender.name);
     match runtype
     {
         Runtype::Command =>

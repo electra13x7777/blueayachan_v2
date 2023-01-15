@@ -9,7 +9,7 @@ use std::
 };
 use rand::Rng;
 use chrono::NaiveDateTime;
-use crate::{helpers::to_lowercase_cow, commands::{Command, Runtype}};
+use crate::{commands::{Command, Runtype}};
 
 use crate::db_ops::*;
 use crate::models::*;
@@ -98,19 +98,19 @@ pub async fn query_safebooru(runtype: Runtype, command: Command) -> anyhow::Resu
     {
         Runtype::Command =>
         {
-            let args_lowercase = to_lowercase_cow(command.args());
-            let req_str = format!("https://safebooru.org/index.php?page=dapi&s=post&q=index&rating=g&tags={}+-rating:questionable", args_lowercase);
+            let args = command.args();
+            let req_str = format!("https://safebooru.org/index.php?page=dapi&s=post&q=index&rating=g&tags={}+-rating:questionable", args);
             let data = reqwest::get(req_str).await?.text().await?;
             let posts: SafebooruPosts = match serde_xml_rs::from_str(&data)
             {
                 Ok(posts) => posts,
-                _ => return Ok(format!("No results found for given arguments: {} https://imgur.com/a/vQsv7Rj", command.args())),
+                _ => return Ok(format!("No results found for given arguments: {} https://imgur.com/a/vQsv7Rj", args)),
             };
             // handle timeout when we know we have queried an image
             if HAS_TIMEOUT
             {
                 let ndt_now: NaiveDateTime = chrono::offset::Local::now().naive_local();
-                let bacuser: BACUser = query_user_data(&command.msg.sender.name.to_lowercase());
+                let bacuser: BACUser = query_user_data(&command.msg.sender.name);
                 let timeout_out: (bool, i64) = handle_pic_timeout(&bacuser, ndt_now, TIMEOUT_DIFF);
                 if !timeout_out.0 // User has not waited for the timeout length
                 {
@@ -127,12 +127,12 @@ pub async fn query_safebooru(runtype: Runtype, command: Command) -> anyhow::Resu
         Runtype::Hash =>
         {
             let args = command.args();
-            let req_str = format!("https://safebooru.org/index.php?page=dapi&s=post&q=index&rating=g&tags={}+-rating:questionable", &args.to_lowercase());
+            let req_str = format!("https://safebooru.org/index.php?page=dapi&s=post&q=index&rating=g&tags={}+-rating:questionable", args);
             let data = reqwest::get(req_str).await?.text().await?;
             let posts: SafebooruPosts = match serde_xml_rs::from_str(&data)
             {
                 Ok(posts) => posts,
-                _ => return Ok(format!("No results found for given arguments: {} https://imgur.com/a/vQsv7Rj", &args)),
+                _ => return Ok(format!("No results found for given arguments: {} https://imgur.com/a/vQsv7Rj", args)),
             };
             // handle timeout when we know we have queried an image
             if HAS_TIMEOUT

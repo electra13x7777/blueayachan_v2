@@ -2,7 +2,7 @@
 
 use rand::Rng;
 
-use crate::{helpers::{readlines_to_vec, to_lowercase_cow}, commands::{Command, Runtype}};
+use crate::{helpers::{readlines_to_vec}, commands::{Command, Runtype}};
 use crate::db_ops::*;
 use crate::models::*;
 
@@ -78,8 +78,7 @@ pub async fn demongacha(runtype: Runtype, command: Command) -> anyhow::Result<St
 
             // HANDLE AUX DB STUFF
             // TODO: CHANGE THIS TO QUERY BY ID
-            let sender_name_lowercase = to_lowercase_cow(&command.msg.sender.name);
-            let bacuser: BACUser = query_user_data(&sender_name_lowercase);
+            let bacuser: BACUser = query_user_data(&command.msg.sender.name);
             //let name = demon.demon_name;
             handle_user_last_demon(&bacuser, &demon, rarity);
             if &demon.demon_name == "Kusi Mitama"
@@ -97,8 +96,7 @@ pub async fn demongacha(runtype: Runtype, command: Command) -> anyhow::Result<St
         Runtype::Hash =>
         {
             // TODO: need to check for no table entry
-            let sender_name_lowercase = to_lowercase_cow(&command.msg.sender.name);
-            let bacuser: BACUser = query_user_data(&sender_name_lowercase);
+            let bacuser: BACUser = query_user_data(&command.msg.sender.name);
             let sud = match query_user_demon(&bacuser)
             {
                 // HANDLE SOME (GOOD DATA)
@@ -126,8 +124,7 @@ pub async fn savedemon(runtype: Runtype, command: Command) -> anyhow::Result<Str
     {
         Runtype::Command =>
         {
-            let sender_name_lowercase = to_lowercase_cow(&command.msg.sender.name);
-            let bacuser: BACUser = query_user_data(&sender_name_lowercase);
+            let bacuser: BACUser = query_user_data(&command.msg.sender.name);
             save_user_demon(&bacuser);
             return Ok(format!("{} saved their last demon", command.msg.sender.name));
         },

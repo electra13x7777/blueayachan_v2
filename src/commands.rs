@@ -22,7 +22,6 @@ use twitch_irc::
 use colored::*;
 
 use crate::helpers::to_lowercase_cow;
-
 use crate::db_ops::*;
 use crate::models::*;
 
@@ -169,8 +168,7 @@ impl EventHandler
         if let Some(callback) = self.command_map.get(command_name_lowercase.as_ref())
         {
             // TODO: check if command is allowed in channel
-            let sender_name_lowercase = to_lowercase_cow(&command.msg.sender.name);
-            handle_bac_user_in_db(&sender_name_lowercase, &command.msg.sender.id); // Updates user database
+            handle_bac_user_in_db(&command.msg.sender.name, &command.msg.sender.id); // Updates user database
             let channel_login = command.msg.channel_login.clone();
             let res = callback(runtype, command.clone()).await?;
             if res.is_empty(){return Ok(());} // if we have nothing to send skip the send
