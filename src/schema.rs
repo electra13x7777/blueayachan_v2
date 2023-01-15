@@ -45,6 +45,46 @@ diesel::table! {
 }
 
 diesel::table! {
+    blueayacommands (id) {
+        id -> Int4,
+        name -> Varchar,
+    }
+}
+
+diesel::table! {
+    botchannels (id) {
+        id -> Int4,
+        channel_name -> Varchar,
+        channel_twitch_id -> Varchar,
+        last_updated -> Timestamp,
+    }
+}
+
+diesel::table! {
+    channelcommands (id) {
+        id -> Int4,
+        channel_bac_id -> Int4,
+        command_id -> Int4,
+        is_active -> Bool,
+        is_broadcaster_only -> Bool,
+        is_mod_only -> Bool,
+        has_timeout -> Bool,
+        timeout_dur -> Int4,
+        last_updated -> Timestamp,
+    }
+}
+
+diesel::table! {
+    commandtimeout (channel_bac_id, user_bac_id, command_id) {
+        id -> Int4,
+        channel_bac_id -> Int4,
+        user_bac_id -> Int4,
+        command_id -> Int4,
+        last_command -> Timestamp,
+    }
+}
+
+diesel::table! {
     dreamboumtweets (id) {
         id -> Int4,
         tweet -> Varchar,
@@ -149,6 +189,9 @@ diesel::table! {
 diesel::joinable!(bac_user_demons -> blueayachanuser (user_id));
 diesel::joinable!(blueayachanuser_roles -> blueayachanuser (user_id));
 diesel::joinable!(blueayachanuser_roles -> roles (role_id));
+diesel::joinable!(channelcommands -> blueayachanuser (channel_bac_id));
+diesel::joinable!(channelcommands -> blueayacommands (command_id));
+diesel::joinable!(commandtimeout -> blueayacommands (command_id));
 diesel::joinable!(pictimeout -> blueayachanuser (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
@@ -157,6 +200,10 @@ diesel::allow_tables_to_appear_in_same_query!(
     bbcfs,
     blueayachanuser,
     blueayachanuser_roles,
+    blueayacommands,
+    botchannels,
+    channelcommands,
+    commandtimeout,
     dreamboumtweets,
     ggxxacplusrs,
     hornedanimes,

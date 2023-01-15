@@ -1,31 +1,12 @@
-use anyhow::Context;
-use std::
-{
-    fs,
-    fs::File,
-    path::Path,
-    env,
-    time::Duration,
-    collections::HashMap,
-    io,
-    io::{prelude::*, BufReader, Write},
-    future::Future,
-    pin::Pin,
-};
+
+
 use rand::Rng;
-use chrono::NaiveDateTime;
-use twitch_irc::
-{
-    login::StaticLoginCredentials,
-    message::{PrivmsgMessage, ServerMessage},
-    ClientConfig, SecureTCPTransport, TwitchIRCClient,
-};
 
 use crate::{helpers::{readlines_to_vec, to_lowercase_cow}, commands::{Command, Runtype}};
 use crate::db_ops::*;
 use crate::models::*;
 
-pub async fn dreamboumtweet(runtype: Runtype, command: Command) -> anyhow::Result<String>//Option<String>//(String, String)
+pub async fn dreamboumtweet(runtype: Runtype, _command: Command) -> anyhow::Result<String>//Option<String>//(String, String)
 {
     //const TOTAL_TWEETS: usize = 6569;
     match runtype
@@ -34,7 +15,7 @@ pub async fn dreamboumtweet(runtype: Runtype, command: Command) -> anyhow::Resul
         {
             let id: i32 = rand::thread_rng().gen_range(1..=get_dbt_count()).try_into().unwrap();
             let tweet_ctx = query_single_dbtweet(id);
-            return Ok(String::from(tweet_ctx));
+            return Ok(tweet_ctx);
         },
         Runtype::Help =>
         {
@@ -44,8 +25,8 @@ pub async fn dreamboumtweet(runtype: Runtype, command: Command) -> anyhow::Resul
         {
             let dbt_vec = readlines_to_vec("assets/dreamboum_tweets_10_05_2022.txt").expect("Could not load lines");
             let index = rand::thread_rng().gen_range(0..dbt_vec.len());
-            let splitpoint: usize = 13;
-            let length = dbt_vec[index].len();
+            let _splitpoint: usize = 13;
+            let _length = dbt_vec[index].len();
             let tweet_ctx: &str = &dbt_vec[index];
             return Ok(String::from(tweet_ctx));
         },
@@ -56,10 +37,6 @@ pub async fn dreamboumtweet(runtype: Runtype, command: Command) -> anyhow::Resul
             let tweet_ctx =  &dbt_vec[index].0;
             //let date_ctx = &dbt_vec[index].1;
             return Ok(String::from(tweet_ctx));
-        },
-        _ =>
-        {
-            Ok(String::from(""))
         },
     }
 }
@@ -104,7 +81,7 @@ pub async fn demongacha(runtype: Runtype, command: Command) -> anyhow::Result<St
             let sender_name_lowercase = to_lowercase_cow(&command.msg.sender.name);
             let bacuser: BACUser = query_user_data(&sender_name_lowercase);
             //let name = demon.demon_name;
-            handle_user_last_demon(bacuser, &demon, &rarity);
+            handle_user_last_demon(&bacuser, &demon, rarity);
             if &demon.demon_name == "Kusi Mitama"
             {
                 return Ok(format!("{} summoned a {}⭐ NAME_CENSORED_BY_TWITCH_POLICE Mitama! {}", command.msg.sender.name, rarity, demon.demon_img_link));
@@ -151,13 +128,13 @@ pub async fn savedemon(runtype: Runtype, command: Command) -> anyhow::Result<Str
         {
             let sender_name_lowercase = to_lowercase_cow(&command.msg.sender.name);
             let bacuser: BACUser = query_user_data(&sender_name_lowercase);
-            save_user_demon(bacuser);
+            save_user_demon(&bacuser);
             return Ok(format!("{} saved their last demon", command.msg.sender.name));
         },
         Runtype::Help =>
         {
 
-            return Ok(format!("This command saves the last demon you summoned with !demongacha."));
+            return Ok("This command saves the last demon you summoned with !demongacha.".to_string());
         },
         _ =>
         {
@@ -229,11 +206,11 @@ pub async fn melty(runtype: Runtype, command: Command) -> anyhow::Result<String>
                 2 => "Full Moon",
                 _ => "",
             };
-            return Ok(format!("{} your new main in Melty Blood: Actress Again is {} {}!", command.msg.sender.name, moon.to_string(), queried_string));
+            return Ok(format!("{} your new main in Melty Blood: Actress Again is {} {}!", command.msg.sender.name, moon, queried_string));
         },
         Runtype::Help =>
         {
-            return Ok(format!("This command gives you a brand new main for Melty Blood: Actress Again"));
+            return Ok("This command gives you a brand new main for Melty Blood: Actress Again".to_string());
         },
         _ => Ok(String::from("")),
     }
@@ -245,22 +222,21 @@ pub async fn chen(runtype: Runtype, command: Command) -> anyhow::Result<String>
     {
         Runtype::Command =>
         {
-            let mut chen_str: (String, String) = match command.msg.channel_login.as_str() // will read from a database eventually
+            let chen_str: (String, String) = match command.msg.channel_login.as_str() // will read from a database eventually
             {
                 "claude" => (String::from("HONKHONK"), String::from("CirnoGenius")),
                 "blueayachan" => (String::from("saHonk"), String::from("CirnoGenius")),
                 "darko_rta" => (String::from("saHonk"), String::from("CirnoGenius")),
                 "electra_rta" => (String::from("saHonk"), String::from("CirnoGenius")),
                 "crypton42" => (String::from("saHonk"), String::from("saHonk")),
-                _ => (String::from(""), String::from(""))
+                _ => return Ok(String::from("")),
             };
-            if chen_str.0 == ""{return Ok(String::from(""))}
             let chens: usize = rand::thread_rng().gen_range(0..=10);
             match chens
             {
                 0 => return Ok(format!("{}... got 0 chens :(", command.msg.sender.name)),
                 1 => return Ok(format!("{} got {} chen. {}",  command.msg.sender.name, chens, chen_str.0)),
-                _ => chens
+                _ => {}
             };
             let mut new_chens: String = "".to_owned();
             for i in 1..=chens
@@ -280,7 +256,7 @@ pub async fn chen(runtype: Runtype, command: Command) -> anyhow::Result<String>
         },
         Runtype::Help =>
         {
-            Ok(format!("This command gives you chens. Yay!"))
+            Ok("This command gives you chens. Yay!".to_string())
         },
         Runtype::Hash =>
         {
@@ -291,14 +267,13 @@ pub async fn chen(runtype: Runtype, command: Command) -> anyhow::Result<String>
                 "darko_rta" => String::from("saHonk"),
                 "electra_rta" => String::from("saHonk"),
                 "crypton42" => String::from("saHonk"),
-                _ => String::from("")
+                _ => return Ok(String::from("")),
             };
-            if chen_str == ""{return Ok(String::from(""))}
             let chens: usize = rand::thread_rng().gen_range(0..=10);
             match chens
             {
-                0 => return Ok(format!("0 chens :(")),
-                1 => return Ok(format!("{}", chen_str)),
+                0 => return Ok("0 chens :(".to_string()),
+                1 => return Ok(chen_str),
                 _ => chens
             };
             let mut new_chens: String = "".to_owned();
@@ -310,7 +285,7 @@ pub async fn chen(runtype: Runtype, command: Command) -> anyhow::Result<String>
                     new_chens += " ";
                 }
             }
-            Ok(format!("{}", new_chens))
+            Ok(new_chens)
         },
         _ => Ok(String::from("")),
     }

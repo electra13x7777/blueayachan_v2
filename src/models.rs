@@ -12,8 +12,8 @@ use chrono::NaiveDateTime;
 pub struct NewBACUser<'a>
 {
     pub user_nick: &'a str,
-    pub num_commands: &'a i32,
-    pub date_added: &'a NaiveDateTime,
+    pub num_commands: i32,
+    pub date_added: NaiveDateTime,
     pub twitch_id: &'a str,
 }
 
@@ -32,7 +32,7 @@ pub struct BACUser
 #[diesel(table_name = bac_twitch_id)]
 pub struct NewBACTwitchId<'a>
 {
-    pub user_id: &'a i32,
+    pub user_id: i32,
     pub twitch_id: &'a str,
 }
 
@@ -54,7 +54,7 @@ last_pic TIMESTAMP DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
 pub struct NewRole<'a>
 {
     pub role_name: &'a str,
-    pub date_added: &'a NaiveDateTime,
+    pub date_added: NaiveDateTime,
 }
 
 #[derive(Queryable, Selectable)]
@@ -69,15 +69,15 @@ pub struct Role
 
 //#[diesel(belongs_to(i32, foreign_key = user_id))]
 //#[diesel(belongs_to(roles, foreign_key = role_id))]
+#[derive(Insertable, Associations)]
 #[diesel(belongs_to(BACUser, foreign_key = user_id))]
 #[diesel(belongs_to(Role, foreign_key = role_id))]
-#[derive(Insertable, Associations)]
 #[diesel(table_name = blueayachanuser_roles)]
-pub struct NewBAC_User_Role<'a>
+pub struct NewBAC_User_Role
 {
-    pub user_id: &'a i32,
-    pub role_id: &'a i32,
-    pub created: &'a NaiveDateTime
+    pub user_id: i32,
+    pub role_id: i32,
+    pub created: NaiveDateTime
 }
 
 #[derive(Queryable, Selectable, Associations)]
@@ -139,15 +139,15 @@ pub struct NDemon
 #[derive(Insertable)]
 #[diesel(belongs_to(blueayachanuser, foreign_key = user_id))]
 #[diesel(table_name = bac_user_demons)]
-pub struct New_SavedNDemon<'a>
+pub struct New_SavedNDemon
 {
-    pub user_id: &'a i32, // BACUser
+    pub user_id: i32, // BACUser
     // only updates when saved
-    pub saved_demon_id: &'a i32,
-    pub saved_demon_rarity: &'a i32,
+    pub saved_demon_id: i32,
+    pub saved_demon_rarity: i32,
     // updated every time
-    pub last_demon_id: &'a i32,
-    pub last_demon_rarity: &'a i32,
+    pub last_demon_id: i32,
+    pub last_demon_rarity: i32,
 }
 
 #[derive(Queryable, Selectable)]
@@ -166,10 +166,10 @@ pub struct SavedNDemon
 
 #[derive(Insertable)]
 #[diesel(table_name = pictimeout)]
-pub struct NewPicTimeout<'a>
+pub struct NewPicTimeout
 {
-    pub user_id: &'a i32, // foreign_key from blueayachanuser
-    pub last_pic: &'a NaiveDateTime,
+    pub user_id: i32, // foreign_key from blueayachanuser
+    pub last_pic: NaiveDateTime,
 }
 
 #[derive(Queryable, Selectable)]
@@ -181,6 +181,83 @@ pub struct PicTimeout
     pub last_pic: NaiveDateTime,
 }
 
+#[derive(Insertable)]
+#[diesel(table_name = botchannels)]
+pub struct NewBotChannel<'a>
+{
+    pub channel_name: &'a str, // foreign_key from botchannels
+    pub channel_twitch_id: &'a str,
+    pub last_updated: NaiveDateTime,
+}
+
+#[derive(Queryable, Selectable)]
+#[diesel(table_name = botchannels)]
+pub struct BotChannel
+{
+    pub id: i32,
+    pub channel_name: String, // foreign_key from botchannels
+    pub channel_twitch_id: String,
+    pub last_updated: NaiveDateTime,
+}
+
+#[derive(Insertable)]
+#[diesel(table_name = channelcommands)]
+pub struct NewChannelCommands
+{
+    //pub channel_twitch_id: &'a str, // foreign_key from botchannels
+    pub channel_bac_id: i32,
+    pub command_id: i32, // foreign_key from blueayacommands
+    pub is_active: bool,
+    pub is_broadcaster_only: bool,
+    pub is_mod_only: bool,
+    pub has_timeout: bool,
+    pub timeout_dur: i32,
+    //pub num_used: i32, // WILL PUT THIS IN ITS OWN TABLE
+    pub last_updated: NaiveDateTime,
+}
+
+#[derive(Queryable, Selectable)]
+//#[primary_key(channel_bac_id, command_id)]
+#[diesel(table_name = channelcommands)]
+pub struct ChannelCommands
+{
+    pub id: i32,
+    //pub channel_twitch_id: String, // foreign_key from botchannels
+    pub channel_bac_id: i32,
+    pub command_id: i32, // foreign_key from blueayacommands
+    pub is_active: bool,
+    pub is_broadcaster_only: bool,
+    pub is_mod_only: bool,
+    pub has_timeout: bool,
+    pub timeout_dur: i32,
+    //pub num_used: i32,
+    pub last_updated: NaiveDateTime,
+}
+
+#[derive(Insertable)]
+#[diesel(table_name = commandtimeout)]
+pub struct NewCommandTimeout
+{
+    //pub channel_twitch_id: &'a str, // foreign_key from botchannels
+    //pub user_twitch_id: &'a str,
+    pub channel_bac_id: i32,
+    pub user_bac_id: i32,
+    pub command_id: i32, // foreign_key from blueayacommands
+    pub last_command: NaiveDateTime,
+}
+
+#[derive(Queryable, Selectable)]
+#[diesel(table_name = commandtimeout)]
+pub struct CommandTimeout
+{
+    pub id: i32,
+    //pub channel_twitch_id: String, // foreign_key from botchannels
+    //pub user_twitch_id: String,
+    pub channel_bac_id: i32,
+    pub user_bac_id: i32,
+    pub command_id: i32, // foreign_key from blueayacommands
+    pub last_command: NaiveDateTime,
+}
 
 // GENERATE DB ENDPOINTS
 macro_rules! generate_simple_db_structs
@@ -217,3 +294,4 @@ generate_simple_db_structs!(vsavs, New_Vsav, Vsav, 'a);
 generate_simple_db_structs!(jojos, New_Jojo, Jojo, 'a);
 generate_simple_db_structs!(millions, New_Millions, Millions, 'a);
 generate_simple_db_structs!(kinohackers, New_Kinohack, Kinohack, 'a);
+generate_simple_db_structs!(blueayacommands, New_BACommand, BACommand, 'a);

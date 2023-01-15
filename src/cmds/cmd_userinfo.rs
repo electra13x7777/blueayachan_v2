@@ -1,27 +1,10 @@
-use anyhow::Context;
-use std::
-{
-    fs,
-    fs::File,
-    path::Path,
-    env,
-    time::Duration,
-    collections::HashMap,
-    io,
-    io::{prelude::*, BufReader, Write},
-    future::Future,
-    pin::Pin,
-};
-use rand::Rng;
-use chrono::NaiveDateTime;
-use twitch_irc::
-{
-    login::StaticLoginCredentials,
-    message::{PrivmsgMessage, ServerMessage},
-    ClientConfig, SecureTCPTransport, TwitchIRCClient,
-};
 
-use crate::{helpers::readlines_to_vec, commands::{Command, Runtype}};
+
+
+use chrono::NaiveDateTime;
+
+use crate::{commands::{Command, Runtype}};
+
 use crate::db_ops::*;
 use crate::models::*;
 
@@ -44,7 +27,7 @@ pub async fn me(runtype: Runtype, command: Command) -> anyhow::Result<String>
         },
         Runtype::Help =>
         {
-            return Ok(format!("This command returns information based on your usage of the bot."));
+            return Ok("This command returns information based on your usage of the bot.".to_string());
         },
         Runtype::Hash =>
         {
