@@ -5,7 +5,7 @@ use crate::{helpers::readlines_to_vec, commands::{Runtype, Command}};
 use crate::db_ops::*;
 
 
-pub async fn range(runtype: Runtype, command: Command) -> anyhow::Result<String>
+pub async fn range(command: Command) -> anyhow::Result<String>
 {
     fn arg_is_int(s: &str) -> bool
     {
@@ -18,7 +18,7 @@ pub async fn range(runtype: Runtype, command: Command) -> anyhow::Result<String>
         }
         return true;
     }
-    match runtype
+    match command.runtype
     {
         Runtype::Command =>
         {
@@ -56,9 +56,9 @@ pub async fn range(runtype: Runtype, command: Command) -> anyhow::Result<String>
     }
 }
 
-pub async fn pick(runtype: Runtype, command: Command) -> anyhow::Result<String>
+pub async fn pick(command: Command) -> anyhow::Result<String>
 {
-    match runtype
+    match command.runtype
     {
         Runtype::Command =>
         {
@@ -77,9 +77,9 @@ pub async fn pick(runtype: Runtype, command: Command) -> anyhow::Result<String>
     }
 }
 
-pub async fn is_hentai(runtype: Runtype, _command: Command) -> anyhow::Result<String>
+pub async fn is_hentai(command: Command) -> anyhow::Result<String>
 {
-    match runtype
+    match command.runtype
     {
         Runtype::Command =>
         {
@@ -98,9 +98,9 @@ pub async fn is_hentai(runtype: Runtype, _command: Command) -> anyhow::Result<St
 
 
 
-pub async fn cfb(runtype: Runtype, _command: Command) -> anyhow::Result<String>
+pub async fn cfb(command: Command) -> anyhow::Result<String>
 {
-    match runtype
+    match command.runtype
     {
         Runtype::Command =>
         {
@@ -120,9 +120,9 @@ pub async fn cfb(runtype: Runtype, _command: Command) -> anyhow::Result<String>
     }
 }
 
-pub async fn kinohackers(runtype: Runtype, _command: Command) -> anyhow::Result<String>
+pub async fn kinohackers(command: Command) -> anyhow::Result<String>
 {
-    match runtype
+    match command.runtype
     {
         Runtype::Command =>
         {
@@ -138,9 +138,9 @@ pub async fn kinohackers(runtype: Runtype, _command: Command) -> anyhow::Result<
     }
 }
 
-pub async fn strive(runtype: Runtype, command: Command) -> anyhow::Result<String>
+pub async fn strive(command: Command) -> anyhow::Result<String>
 {
-    match runtype
+    match command.runtype
     {
         Runtype::Command =>
         {
@@ -161,9 +161,9 @@ pub async fn strive(runtype: Runtype, command: Command) -> anyhow::Result<String
     }
 }
 
-pub async fn shftnw(runtype: Runtype, command: Command) -> anyhow::Result<String>
+pub async fn shftnw(command: Command) -> anyhow::Result<String>
 {
-    match runtype
+    match command.runtype
     {
         Runtype::Command =>
         {
@@ -183,9 +183,9 @@ macro_rules! generate_simple_command
 {
     ($fn_name:ident, $text:literal) =>
     {
-        pub async fn $fn_name(runtype: Runtype, _command: Command) -> anyhow::Result<String>
+        pub async fn $fn_name(command: Command) -> anyhow::Result<String>
         {
-            match runtype
+            match command.runtype
             {
                 Runtype::Command =>
                 {

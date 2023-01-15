@@ -31,7 +31,7 @@ pub type Twitch_Client = TwitchIRCClient<SecureTCPTransport, StaticLoginCredenti
 
 // CALLBACK TYPES (Blocking, Non-Blocking) [Function Pointers]
 //pub type Callback = fn(u8, PrivmsgMessage) -> anyhow::Result<String>;
-pub type Callback = Box<dyn Fn(Runtype, Command) -> Pin<Box<dyn Future<Output = anyhow::Result<String>> + 'static + Send + Sync,>> + 'static + Send + Sync,>;
+pub type Callback = Box<dyn Fn(Command) -> Pin<Box<dyn Future<Output = anyhow::Result<String>> + 'static + Send + Sync,>> + 'static + Send + Sync,>;
 
 
 pub struct EventHandler
@@ -47,10 +47,10 @@ impl EventHandler
     // Future yields a Result that can be unwrapped into a String
     pub fn add_command<Cb, F>(&mut self, name: String, function: Cb)
     where
-    Cb: Fn(Runtype, Command) -> F + 'static + Send + Sync,
+    Cb: Fn(Command) -> F + 'static + Send + Sync,
     F: Future<Output = anyhow::Result<String>> + 'static + Send + Sync,
     {
-        let cb = Box::new(move |runtype, cmd| Box::pin(function(runtype, cmd)) as _);
+        let cb = Box::new(move |cmd| Box::pin(function(cmd)) as _);
         self.command_map.insert(name, cb);
     }
 
@@ -70,7 +70,7 @@ impl EventHandler
 
         FOR COMMAND IMPLEMENTATIONS SEE ~/cmds/
     */
-    pub async fn execute_command(&self, runtype: Runtype, command: Command, client: Twitch_Client) -> anyhow::Result<()>
+    pub async fn execute_command(&self, command: Command, client: Twitch_Client) -> anyhow::Result<()>
     {
         const COLOR_FLAG: bool = true;
         //const TRACK_CC: bool = true;
@@ -137,7 +137,7 @@ impl EventHandler
             {
                 const COMMAND_INDEX: usize = 0;
                 let callback = self.command_map.get(command.name()).expect("Could not execute function pointer!");
-                let res = callback(runtype, command.clone()).await.unwrap();
+                let res = callback(command.clone()).await.unwrap();
                 if res.is_empty(){return Ok(());} // if we have nothing to send skip the send
                 match COLOR_FLAG
                 {
@@ -162,7 +162,7 @@ impl EventHandler
 
     // OLD IMPLEMENTATION FOR BACKWARDS COMPAT
     // TODO: REMOVE
-    pub async fn execute_command_old(&self, runtype: Runtype, command: Command, client: Twitch_Client) -> anyhow::Result<()>
+    pub async fn execute_command_old(&self, command: Command, client: Twitch_Client) -> anyhow::Result<()>
     {
         let command_name_lowercase = to_lowercase_cow(command.name());
         if let Some(callback) = self.command_map.get(command_name_lowercase.as_ref())
@@ -170,7 +170,7 @@ impl EventHandler
             // TODO: check if command is allowed in channel
             handle_bac_user_in_db(&command.msg.sender.name, &command.msg.sender.id); // Updates user database
             let channel_login = command.msg.channel_login.clone();
-            let res = callback(runtype, command.clone()).await?;
+            let res = callback(command.clone()).await?;
             if res.is_empty(){return Ok(());} // if we have nothing to send skip the send
             let dt_fmt = chrono::offset::Local::now().format("%H:%M:%S").to_string();
             const COLOR_FLAG: bool = true;
@@ -187,14 +187,17 @@ impl EventHandler
 
 #[derive(Debug, Clone)]
 pub struct Command {
+    pub runtype: Runtype,
     pub msg: PrivmsgMessage,
 }
 
 impl Command {
-    pub fn new(msg: PrivmsgMessage) -> Self {
-        return Self {
+    pub fn try_from_msg(msg: PrivmsgMessage) -> Option<Self> {
+        let runtype = Runtype::try_from_msg(&msg.message_text)?;
+        return Some(Self {
+            runtype,
             msg,
-        };
+        });
     }
 
     fn cmd_and_args(&self) -> (&str, &str) {
@@ -217,7 +220,7 @@ impl Command {
 }
 
 // AZUCHANG'S BOILERPLATE
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Runtype
 {
     Command,

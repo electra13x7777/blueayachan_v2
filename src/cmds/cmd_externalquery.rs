@@ -20,9 +20,9 @@ use serde_json::{Value};
 // Comamand: !speedgame
 //
 //
-pub async fn query_srl(runtype: Runtype, command: Command) -> anyhow::Result<String>
+pub async fn query_srl(command: Command) -> anyhow::Result<String>
 {
-    match runtype
+    match command.runtype
     {
         Runtype::Command =>
         {
@@ -74,7 +74,7 @@ pub struct SafebooruPosts
 // Function: query_safebooru
 // Return Type: Result<String>
 // Description: Sends a GET request to the safebooru API which returns XML data for posts. Then parses that data into abstractions of the Posts on safebooru. 
-pub async fn query_safebooru(runtype: Runtype, command: Command) -> anyhow::Result<String>
+pub async fn query_safebooru(command: Command) -> anyhow::Result<String>
 {
     const HAS_TIMEOUT: bool = true;
     const CHANNEL_FILTER: bool = true;
@@ -94,7 +94,7 @@ pub async fn query_safebooru(runtype: Runtype, command: Command) -> anyhow::Resu
     }
 
     const TIMEOUT_DIFF: i64 = 30;
-    match runtype
+    match command.runtype
     {
         Runtype::Command =>
         {

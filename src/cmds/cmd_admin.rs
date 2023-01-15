@@ -25,7 +25,7 @@ use crate::models::*;
 //          !set cmd mod                     m
 //          !set cmd all                     a
 
-pub async fn set_command(runtype: Runtype, command: Command) -> anyhow::Result<String>
+pub async fn set_command(command: Command) -> anyhow::Result<String>
 {
     const ADMIN_CMDS: &'static [&'static str] = &["on", "off", "toggle", "timeout", "broadcaster", "mod", "all"];
     const ADMIN_CMDS_ALIAS: &'static [&'static str] = &["t", "me", "b", "m", "a"];
@@ -33,7 +33,7 @@ pub async fn set_command(runtype: Runtype, command: Command) -> anyhow::Result<S
     {
         return Ok(format!("{}, this is a broadcaster only command!", command.msg.sender.name));
     }
-    match runtype
+    match command.runtype
     {
         Runtype::Command =>
         {

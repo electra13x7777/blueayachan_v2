@@ -6,10 +6,10 @@ use crate::{helpers::{readlines_to_vec}, commands::{Command, Runtype}};
 use crate::db_ops::*;
 use crate::models::*;
 
-pub async fn dreamboumtweet(runtype: Runtype, _command: Command) -> anyhow::Result<String>//Option<String>//(String, String)
+pub async fn dreamboumtweet(command: Command) -> anyhow::Result<String>//Option<String>//(String, String)
 {
     //const TOTAL_TWEETS: usize = 6569;
-    match runtype
+    match command.runtype
     {
         Runtype::Command =>
         {
@@ -42,9 +42,9 @@ pub async fn dreamboumtweet(runtype: Runtype, _command: Command) -> anyhow::Resu
 }
 
 // DEMONGACHA
-pub async fn demongacha(runtype: Runtype, command: Command) -> anyhow::Result<String>
+pub async fn demongacha(command: Command) -> anyhow::Result<String>
 {
-    match runtype
+    match command.runtype
     {
         Runtype::Command =>
         {
@@ -118,9 +118,9 @@ pub async fn demongacha(runtype: Runtype, command: Command) -> anyhow::Result<St
     }
 }
 
-pub async fn savedemon(runtype: Runtype, command: Command) -> anyhow::Result<String>
+pub async fn savedemon(command: Command) -> anyhow::Result<String>
 {
-    match runtype
+    match command.runtype
     {
         Runtype::Command =>
         {
@@ -141,9 +141,9 @@ pub async fn savedemon(runtype: Runtype, command: Command) -> anyhow::Result<Str
 }
 
 
-pub async fn hornedanimegacha(runtype: Runtype, command: Command) -> anyhow::Result<String>
+pub async fn hornedanimegacha(command: Command) -> anyhow::Result<String>
 {
-    match runtype
+    match command.runtype
     {
         Runtype::Command =>
         {
@@ -187,9 +187,9 @@ pub async fn hornedanimegacha(runtype: Runtype, command: Command) -> anyhow::Res
     }
 }
 
-pub async fn melty(runtype: Runtype, command: Command) -> anyhow::Result<String>
+pub async fn melty(command: Command) -> anyhow::Result<String>
 {
-    match runtype
+    match command.runtype
     {
         Runtype::Command =>
         {
@@ -213,9 +213,9 @@ pub async fn melty(runtype: Runtype, command: Command) -> anyhow::Result<String>
     }
 }
 
-pub async fn chen(runtype: Runtype, command: Command) -> anyhow::Result<String>
+pub async fn chen(command: Command) -> anyhow::Result<String>
 {
-    match runtype
+    match command.runtype
     {
         Runtype::Command =>
         {
@@ -293,9 +293,9 @@ macro_rules! generate_simple_gacha
 {
     ($fn_name:ident, $game_name:literal, $count:ident, $query_fn:ident) =>
     {
-        pub async fn $fn_name(runtype: Runtype, command: Command) -> anyhow::Result<String>
+        pub async fn $fn_name(command: Command) -> anyhow::Result<String>
         {
-            match runtype
+            match command.runtype
             {
                 Runtype::Command =>
                 {
