@@ -52,35 +52,11 @@ pub async fn set_command(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result
             };
             // maybe check arg count?
             let bacchannel: BACUser = query_user_data(&msg_ctx.channel_login);
-            match argv_s[1]
+            let res: &str = match argv_s[1]
             {
-                "on" =>
-                {
-                    let res: (bool, String) = set_channel_command_active(&bacchannel, id_val);
-                    match res.0
-                    {
-                        true => {return Ok(res.1);},
-                        false => {return Ok(res.1);},
-                    }
-                },
-                "off" =>
-                {
-                    let res: (bool, String) = set_channel_command_inactive(&bacchannel, id_val);
-                    match res.0
-                    {
-                        true => {return Ok(res.1);},
-                        false => {return Ok(res.1);},
-                    }
-                },
-                "toggle" =>
-                {
-                    let res: (bool, String) = toggle_channel_command_active(&bacchannel, id_val);
-                    match res.0
-                    {
-                        true => {return Ok(res.1);},
-                        false => {return Ok(res.1);},
-                    }
-                }
+                "on" => set_channel_command_active(&bacchannel, id_val),
+                "off" => set_channel_command_inactive(&bacchannel, id_val),
+                "toggle" => toggle_channel_command_active(&bacchannel, id_val),
                 // TIMEOUT REQUIRES A 3RD POSITIONAL ARGUMENT
                 "timeout" | "t" =>
                 {
@@ -96,68 +72,22 @@ pub async fn set_command(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result
                     if timeout_val == 0
                     {
                         //let res_dur: (bool, String) = set_channel_command_timeout_duration(timeout_val);
-                        let res: (bool, String) = set_channel_command_timeout_off(&bacchannel, id_val);
-                        match res.0
-                        {
-                            true => {return Ok(res.1);},
-                            false => {return Ok(res.1);},
-                        }
+                        let res: &str = set_channel_command_timeout_off(&bacchannel, id_val);
+                        return Ok(res.to_string());
                     }
-                    let to_res: (bool, String) = set_channel_command_timeout_on(&bacchannel, id_val);
-                    match to_res.0
-                    {
-                        true =>
-                        {
-                            let dur_res: (bool, String) = set_channel_command_timeout_duration(&query_user_data(&msg_ctx.channel_login), id_val, timeout_val);
-                            match dur_res.0
-                            {
-                                true => {return Ok(dur_res.1);},
-                                false => {return Ok(dur_res.1);},
-                            }
-                        },
-                        false =>
-                        {
-                            let dur_res: (bool, String) = set_channel_command_timeout_duration(&query_user_data(&msg_ctx.channel_login), id_val, timeout_val);
-                            match dur_res.0
-                            {
-                                true => {return Ok(dur_res.1);},
-                                false => {return Ok(dur_res.1);},
-                            }
-                        },
-                    }
+                    let _ = set_channel_command_timeout_on(&bacchannel, id_val);
+                    let dur_res: &str = set_channel_command_timeout_duration(&query_user_data(&msg_ctx.channel_login), id_val, timeout_val);
+                    dur_res
                 },
-                "broadcaster" | "b" =>
-                {
-                    let res: (bool, String) = set_channel_command_broadcaster_only(&bacchannel, id_val);
-                    match res.0
-                    {
-                        true => {return Ok(res.1);},
-                        false => {return Ok(res.1);},
-                    }
-                },
-                "mod" | "m" =>
-                {
-                    let res: (bool, String) = set_channel_command_mod_only(&bacchannel, id_val);
-                    match res.0
-                    {
-                        true => {return Ok(res.1);},
-                        false => {return Ok(res.1);},
-                    }
-                },
-                "all" | "a" =>
-                {
-                    let res: (bool, String) = set_channel_command_all(&bacchannel, id_val);
-                    match res.0
-                    {
-                        true => {return Ok(res.1);},
-                        false => {return Ok(res.1);},
-                    }
-                },
+                "broadcaster" | "b" => set_channel_command_broadcaster_only(&bacchannel, id_val),
+                "mod" | "m" => set_channel_command_mod_only(&bacchannel, id_val),
+                "all" | "a" => set_channel_command_all(&bacchannel, id_val),
                 _ =>
                 {
                     return Ok(String::from("Invalid Command Op. ARG2"));
                 },
-            }
+            };
+            return Ok(res.to_string())
         },
         b'?' =>
         {

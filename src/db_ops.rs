@@ -449,9 +449,8 @@ pub fn query_channel_command(bacchannel: &BACUser, command_id_val: i32) -> Optio
 
 // SET CHANNEL COMMANDS
 // MUST BE BROADCASTER
-// ALL SUCCESSFUL RUNS WILL RETURN TRUE, FAILURE RETURNS FALSE
 
-pub fn set_channel_command_active(bacchannel: &BACUser, command_id_val: i32) -> (bool, String)
+pub fn set_channel_command_active(bacchannel: &BACUser, command_id_val: i32) -> &'static str
 {
     use crate::schema::channelcommands::dsl::*;
     let ch_id = bacchannel.id;
@@ -460,20 +459,20 @@ pub fn set_channel_command_active(bacchannel: &BACUser, command_id_val: i32) -> 
     let cc = match query_channel_command(bacchannel, command_id_val)
     {
         Some(cc) => cc,
-        None => return (false, "Command not found".to_string())
+        None => return "Command not found"
     };
     let ndt_now: NaiveDateTime = chrono::offset::Local::now().naive_local();
     if cc.is_active
     {
-        return (false, "Command is already active".to_string());
+        return "Command is already active";
     }
     diesel::update(channelcommands.filter(channel_bac_id.eq(&ch_id).and(command_id.eq(&cmd_id))))
             .set((is_active.eq(true), last_updated.eq(&ndt_now),))
             .execute(&mut connection).expect("Error updating channel command");
-    return (true, "set to active".to_string());
+    return "set to active";
 }
 
-pub fn set_channel_command_inactive(bacchannel: &BACUser, command_id_val: i32) -> (bool, String)
+pub fn set_channel_command_inactive(bacchannel: &BACUser, command_id_val: i32) -> &'static str
 {
     use crate::schema::channelcommands::dsl::*;
     let ch_id = bacchannel.id;
@@ -482,21 +481,21 @@ pub fn set_channel_command_inactive(bacchannel: &BACUser, command_id_val: i32) -
     let cc = match query_channel_command(bacchannel, command_id_val)
     {
         Some(cc) => cc,
-        None => return (false, "Command not found".to_string())
+        None => return "Command not found"
     };
     let ndt_now: NaiveDateTime = chrono::offset::Local::now().naive_local();
     if !cc.is_active
     {
-        return (false, "Command is already inactive".to_string());
+        return "Command is already inactive";
     }
     diesel::update(channelcommands.filter(channel_bac_id.eq(&ch_id).and(command_id.eq(&cmd_id))))
             .set((is_active.eq(false), last_updated.eq(&ndt_now),))
             .execute(&mut connection).expect("Error updating channel command");
-    return (true, "set to inactive".to_string());
+    return "set to inactive";
 }
 
 //THIS IS A TOGGLE
-pub fn toggle_channel_command_active(bacchannel: &BACUser, command_id_val: i32) -> (bool, String)
+pub fn toggle_channel_command_active(bacchannel: &BACUser, command_id_val: i32) -> &'static str
 {
     use crate::schema::channelcommands::dsl::*;
     let ch_id = bacchannel.id;
@@ -505,7 +504,7 @@ pub fn toggle_channel_command_active(bacchannel: &BACUser, command_id_val: i32) 
     let cc = match query_channel_command(bacchannel, command_id_val)
     {
         Some(cc) => cc,
-        None => return (false, "Command not found".to_string())
+        None => return "Command not found"
     };
     let ndt_now: NaiveDateTime = chrono::offset::Local::now().naive_local();
     if cc.is_active
@@ -513,15 +512,15 @@ pub fn toggle_channel_command_active(bacchannel: &BACUser, command_id_val: i32) 
         diesel::update(channelcommands.filter(channel_bac_id.eq(&ch_id).and(command_id.eq(&cmd_id))))
             .set((is_active.eq(false), last_updated.eq(&ndt_now),))
             .execute(&mut connection).expect("Error updating channel command");
-        return (true, "set to inactive".to_string())
+        return "set to inactive"
     }
     diesel::update(channelcommands.filter(channel_bac_id.eq(&ch_id).and(command_id.eq(&cmd_id))))
             .set((is_active.eq(true), last_updated.eq(&ndt_now),))
             .execute(&mut connection).expect("Error updating channel command");
-    return (true, "set to active".to_string());
+    return "set to active";
 }
 
-pub fn set_channel_command_broadcaster_only(bacchannel: &BACUser, command_id_val: i32) -> (bool, String)
+pub fn set_channel_command_broadcaster_only(bacchannel: &BACUser, command_id_val: i32) -> &'static str
 {
     use crate::schema::channelcommands::dsl::*;
     let ch_id = bacchannel.id;
@@ -530,16 +529,16 @@ pub fn set_channel_command_broadcaster_only(bacchannel: &BACUser, command_id_val
     let _cc = match query_channel_command(bacchannel, command_id_val)
     {
         Some(cc) => cc,
-        None => return (false, "could not find command".to_string())
+        None => return "could not find command"
     };
     let ndt_now: NaiveDateTime = chrono::offset::Local::now().naive_local();
     diesel::update(channelcommands.filter(channel_bac_id.eq(&ch_id).and(command_id.eq(&cmd_id))))
         .set((is_broadcaster_only.eq(true), is_mod_only.eq(false), last_updated.eq(&ndt_now),))
         .execute(&mut connection).expect("Error updating channel command");
-    return (true, "set to broadcaster only".to_string());
+    return "set to broadcaster only";
 }
 
-pub fn set_channel_command_mod_only(bacchannel: &BACUser, command_id_val: i32) -> (bool, String)
+pub fn set_channel_command_mod_only(bacchannel: &BACUser, command_id_val: i32) -> &'static str
 {
     use crate::schema::channelcommands::dsl::*;
     let ch_id = bacchannel.id;
@@ -548,16 +547,16 @@ pub fn set_channel_command_mod_only(bacchannel: &BACUser, command_id_val: i32) -
     let _cc = match query_channel_command(bacchannel, command_id_val)
     {
         Some(cc) => cc,
-        None => return (false, "could not find command".to_string())
+        None => return "could not find command"
     };
     let ndt_now: NaiveDateTime = chrono::offset::Local::now().naive_local();
     diesel::update(channelcommands.filter(channel_bac_id.eq(&ch_id).and(command_id.eq(&cmd_id))))
         .set((is_broadcaster_only.eq(false), is_mod_only.eq(true), last_updated.eq(&ndt_now),))
         .execute(&mut connection).expect("Error updating channel command");
-    return (true, "set to broadcaster, mod, vip only".to_string());
+    return "set to broadcaster, mod, vip only";
 }
 
-pub fn set_channel_command_all(bacchannel: &BACUser, command_id_val: i32) -> (bool, String)
+pub fn set_channel_command_all(bacchannel: &BACUser, command_id_val: i32) -> &'static str
 {
     use crate::schema::channelcommands::dsl::*;
     let ch_id = bacchannel.id;
@@ -566,16 +565,16 @@ pub fn set_channel_command_all(bacchannel: &BACUser, command_id_val: i32) -> (bo
     let _cc = match query_channel_command(bacchannel, command_id_val)
     {
         Some(cc) => cc,
-        None => return (false, "could not find command".to_string())
+        None => return "could not find command"
     };
     let ndt_now: NaiveDateTime = chrono::offset::Local::now().naive_local();
     diesel::update(channelcommands.filter(channel_bac_id.eq(&ch_id).and(command_id.eq(&cmd_id))))
         .set((is_broadcaster_only.eq(false), is_mod_only.eq(false), last_updated.eq(&ndt_now),))
         .execute(&mut connection).expect("Error updating channel command");
-    return (true, "set to all users".to_string());
+    return "set to all users";
 }
 
-pub fn set_channel_command_timeout_on(bacchannel: &BACUser, command_id_val: i32) -> (bool, String)
+pub fn set_channel_command_timeout_on(bacchannel: &BACUser, command_id_val: i32) -> &'static str
 {
     use crate::schema::channelcommands::dsl::*;
     let ch_id = bacchannel.id;
@@ -584,16 +583,16 @@ pub fn set_channel_command_timeout_on(bacchannel: &BACUser, command_id_val: i32)
     let _cc = match query_channel_command(bacchannel, command_id_val)
     {
         Some(cc) => cc,
-        None => return (false, "could not find command".to_string())
+        None => return "could not find command"
     };
     let ndt_now: NaiveDateTime = chrono::offset::Local::now().naive_local();
     diesel::update(channelcommands.filter(channel_bac_id.eq(&ch_id).and(command_id.eq(&cmd_id))))
         .set((has_timeout.eq(true), last_updated.eq(&ndt_now),))
         .execute(&mut connection).expect("Error updating channel command");
-    return (true, "timeout enabled".to_string());
+    return "timeout enabled";
 }
 
-pub fn set_channel_command_timeout_off(bacchannel: &BACUser, command_id_val: i32) -> (bool, String)
+pub fn set_channel_command_timeout_off(bacchannel: &BACUser, command_id_val: i32) -> &'static str
 {
     use crate::schema::channelcommands::dsl::*;
     let ch_id = bacchannel.id;
@@ -602,16 +601,16 @@ pub fn set_channel_command_timeout_off(bacchannel: &BACUser, command_id_val: i32
     let _cc = match query_channel_command(bacchannel, command_id_val)
     {
         Some(cc) => cc,
-        None => return (false, "could not find command".to_string())
+        None => return "could not find command"
     };
     let ndt_now: NaiveDateTime = chrono::offset::Local::now().naive_local();
     diesel::update(channelcommands.filter(channel_bac_id.eq(&ch_id).and(command_id.eq(&cmd_id))))
         .set((has_timeout.eq(false), last_updated.eq(&ndt_now),))
         .execute(&mut connection).expect("Error updating channel command");
-    return (true, "timeout disabled".to_string());
+    return "timeout disabled";
 }
 
-pub fn set_channel_command_timeout_duration(bacchannel: &BACUser, command_id_val: i32, timeout_dur_val: i32) -> (bool, String)
+pub fn set_channel_command_timeout_duration(bacchannel: &BACUser, command_id_val: i32, timeout_dur_val: i32) -> &'static str
 {
     use crate::schema::channelcommands::dsl::*;
     let ch_id = bacchannel.id;
@@ -620,13 +619,13 @@ pub fn set_channel_command_timeout_duration(bacchannel: &BACUser, command_id_val
     let _cc = match query_channel_command(bacchannel, command_id_val)
     {
         Some(cc) => cc,
-        None => return (false, "could not find command".to_string())
+        None => return "could not find command"
     };
     let ndt_now: NaiveDateTime = chrono::offset::Local::now().naive_local();
     diesel::update(channelcommands.filter(channel_bac_id.eq(&ch_id).and(command_id.eq(&cmd_id))))
         .set((timeout_dur.eq(timeout_dur_val), last_updated.eq(&ndt_now),))
         .execute(&mut connection).expect("Error updating channel command");
-    return (true, "timeout duration set".to_string());
+    return "timeout duration set";
 }
 
 // COMMAND TIMEOUT
