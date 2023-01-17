@@ -75,14 +75,13 @@ impl EventHandler
         const COLOR_FLAG: bool = true;
         //const TRACK_CC: bool = true;
         let mut is_pic: bool = false;
-        let mut io_flag: (bool, String) = (false, "".to_string());
+        let mut error_message: Option<String> = None;
         if self.command_map.contains_key(&name)
         {
             handle_bac_user_in_db(&msg_ctx.sender.name, &msg_ctx.sender.id); // Updates user database
             // TODO: check if command is allowed in channel
             //let cmd_name = &name.clone();
-            let cmd_id: i32 = query_command_id(&name).unwrap_or(0);
-            if cmd_id != 0 && !io_flag.0
+            if let Some(cmd_id) = query_command_id(&name)
             {
                 //let channel_name = &msg_ctx.channel_login.clone()
                 //let bacchannel: BACUser = query_user_data(msg_ctx.channel_login.clone());
@@ -92,21 +91,20 @@ impl EventHandler
                 {
                     let bacuser: BACUser = query_user_data(&msg_ctx.sender.name);
                     // COMMAND IS INACTIVE
-                    if !cc.is_active && !io_flag.0
+                    if !cc.is_active && error_message.is_none()
                     {
-                        io_flag.0 = !io_flag.0;
-                        io_flag.1 = format!("This command is not available in {}\'s channel. Sorry {}", msg_ctx.channel_login, msg_ctx.sender.name);
+                        error_message = Some(format!("This command is not available in {}\'s channel. Sorry {}", msg_ctx.channel_login, msg_ctx.sender.name));
                     }
                     let badges: Vec<&str> = msg_ctx.badges.iter().map(|b| b.name.as_str()).collect();
                     // COMMAND IS BROADCASTER ONLY
-                    if cc.is_broadcaster_only && !io_flag.0 && !badges.contains(&"broadcaster") {
-                        io_flag.0 = !io_flag.0;
-                        io_flag.1 = format!("This command is not available only to Broadcasters in {}\'s channel. Sorry {}", msg_ctx.channel_login, msg_ctx.sender.name);
+                    if cc.is_broadcaster_only && error_message.is_none() && !badges.contains(&"broadcaster")
+                    {
+                        error_message = Some(format!("This command is not available only to Broadcasters in {}\'s channel. Sorry {}", msg_ctx.channel_login, msg_ctx.sender.name));
                     }
                     // COMMAND IS BROADCASTER, MOD, VIP ONLY
-                    if cc.is_mod_only && !io_flag.0 && !badges.contains(&"broadcaster") && !badges.contains(&"moderator") && !badges.contains(&"vip") {
-                        io_flag.0 = !io_flag.0;
-                        io_flag.1 = format!("This command is not available to non-mods in {}\'s channel. Sorry {}", msg_ctx.channel_login, msg_ctx.sender.name);
+                    if cc.is_mod_only && error_message.is_none() && !badges.contains(&"broadcaster") && !badges.contains(&"moderator") && !badges.contains(&"vip")
+                    {
+                        error_message = Some(format!("This command is not available to non-mods in {}\'s channel. Sorry {}", msg_ctx.channel_login, msg_ctx.sender.name));
                     }
                     if cmd_id == 7 // SKIP PIC COMMAND FOR NOW
                     {
@@ -120,8 +118,7 @@ impl EventHandler
                         let timeout_out: (bool, i32) = handle_command_timeout(&query_user_data(&msg_ctx.channel_login), &bacuser, cmd_id, ndt_now, cc.timeout_dur);
                         if !timeout_out.0 // User has not waited for the timeout length
                         {
-                            io_flag.0 = !io_flag.0;
-                            io_flag.1 = format!("{}, please wait for {} more second(s)", msg_ctx.sender.name, cc.timeout_dur - timeout_out.1);
+                            error_message = Some(format!("{}, please wait for {} more second(s)", msg_ctx.sender.name, cc.timeout_dur - timeout_out.1));
                         }
                     }
                 }
@@ -133,28 +130,31 @@ impl EventHandler
             }
 
             let dt_fmt = chrono::offset::Local::now().format("%H:%M:%S").to_string();
-            if !io_flag.0 || is_pic
+            match error_message
             {
-                const COMMAND_INDEX: usize = 0;
-                let runtype: u8 = msg_ctx.message_text.as_bytes()[COMMAND_INDEX]; // gets a byte literal (Ex. b'!')
-                let callback = self.command_map.get(&name).expect("Could not execute function pointer!");
-                let res = callback(runtype, msg_ctx.clone()).await.unwrap();
-                if res.is_empty(){return Ok(());} // if we have nothing to send skip the send
-                match COLOR_FLAG
+                Some(error_message) if !is_pic =>
                 {
-                    true => println!("[{}] #{} <{}>: {}", dt_fmt.truecolor(138, 138, 138), msg_ctx.channel_login.truecolor(117, 97, 158), self.bot_nick.red(), res),
-                    false => println!("[{}] #{} <{}>: {}", dt_fmt, msg_ctx.channel_login, self.bot_nick, res),
+                    match COLOR_FLAG
+                    {
+                        true => println!("[{}] #{} <{}>: {}", dt_fmt.truecolor(138, 138, 138), msg_ctx.channel_login.truecolor(117, 97, 158), self.bot_nick.red(), error_message),
+                        false => println!("[{}] #{} <{}>: {}", dt_fmt, msg_ctx.channel_login, self.bot_nick, error_message),
+                    }
+                    client.say(msg_ctx.channel_login, error_message).await?;
                 }
-                client.say(msg_ctx.channel_login, res).await?;
-            }
-            else
-            {
-                match COLOR_FLAG
+                _ =>
                 {
-                    true => println!("[{}] #{} <{}>: {}", dt_fmt.truecolor(138, 138, 138), msg_ctx.channel_login.truecolor(117, 97, 158), self.bot_nick.red(), io_flag.1),
-                    false => println!("[{}] #{} <{}>: {}", dt_fmt, msg_ctx.channel_login, self.bot_nick, io_flag.1),
+                    const COMMAND_INDEX: usize = 0;
+                    let runtype: u8 = msg_ctx.message_text.as_bytes()[COMMAND_INDEX]; // gets a byte literal (Ex. b'!')
+                    let callback = self.command_map.get(&name).expect("Could not execute function pointer!");
+                    let res = callback(runtype, msg_ctx.clone()).await.unwrap();
+                    if res.is_empty(){return Ok(());} // if we have nothing to send skip the send
+                    match COLOR_FLAG
+                    {
+                        true => println!("[{}] #{} <{}>: {}", dt_fmt.truecolor(138, 138, 138), msg_ctx.channel_login.truecolor(117, 97, 158), self.bot_nick.red(), res),
+                        false => println!("[{}] #{} <{}>: {}", dt_fmt, msg_ctx.channel_login, self.bot_nick, res),
+                    }
+                    client.say(msg_ctx.channel_login, res).await?;
                 }
-                client.say(msg_ctx.channel_login, io_flag.1).await?;
             }
 
         }
