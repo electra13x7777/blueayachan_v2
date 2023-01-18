@@ -1,6 +1,6 @@
 
 
-use rand::Rng;
+use rand::{Rng, seq::SliceRandom};
 
 use crate::{helpers::{readlines_to_vec}, commands::{Command, Runtype}};
 use crate::db_ops::*;
@@ -195,14 +195,7 @@ pub async fn melty(command: Command) -> anyhow::Result<String>
         {
             let id: i32 = rand::thread_rng().gen_range(1..=get_melty_count()).try_into().unwrap();
             let queried_string: String = query_melty(id);
-            let moonstyle_r: i8 = rand::thread_rng().gen_range(0..3);
-            let moon: &str = match moonstyle_r
-            {
-                0 => "Crescent Moon",
-                1 => "Half Moon",
-                2 => "Full Moon",
-                _ => "",
-            };
+            let moon: &str = ["Crescent Moon", "Half Moon", "Full Moon"].choose(&mut rand::thread_rng()).unwrap();
             return Ok(format!("{} your new main in Melty Blood: Actress Again is {} {}!", command.msg.sender.name, moon, queried_string));
         },
         Runtype::Help =>

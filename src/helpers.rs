@@ -14,7 +14,8 @@ use std::
 };
 
 // TYPEOF //
-pub fn print_type_of<T>(_: &T) {
+pub fn print_type_of<T>(_: &T)
+{
     println!("{}", std::any::type_name::<T>())
 }
 
@@ -33,14 +34,9 @@ pub fn readlines_to_map(filename: impl AsRef<Path>) -> io::Result<HashMap<String
     let br = BufReader::new(File::open(filename)?);
     for line in br.lines()
     {
-        if let Some((key, val)) = line.expect("Cannot Read Line").split_once(',')
-        {
-            res.insert(key.to_string(), val.to_string());
-        }
-        else
-        {
-            panic!()
-        };
+        let line = line?;
+        let (key, val) = line.split_once(',').unwrap();
+        res.insert(key.to_string(), val.to_string());
     }
     return Ok(res);
 }

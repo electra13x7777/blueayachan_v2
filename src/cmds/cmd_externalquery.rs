@@ -48,12 +48,11 @@ pub async fn query_srl(command: Command) -> anyhow::Result<String>
             pop_string = pop_string.replace('\"', "");
             let pop: f32 = pop_string.parse::<f32>().unwrap();
             let tenshi_quote: &str =
-            if pop == 0.0{"Wow... no one plays this sh*t..."}
-            else if pop >= 100.0{"...insane popularity! CirnoGenius 🤝 SomaCruzFromAriaOfSorrow"}
-            else if pop >= 20.0{"Wow so popular! DataFace b"}
+            if pop <= 0.0{"Wow... no one plays this sh*t..."}
             else if pop < 20.0{"Holy cow someone has played this game!"}
-            else{"Wow... no one plays this sh*t..."};
-            return Ok(format!("{} your new speedgame is {}! Its popularity rating on SRL is {} TenshiWow o O ( {} ) ", command.msg.sender.name, game.replace('"', ""), pop, tenshi_quote));
+            else if pop < 100.0{"Wow so popular! DataFace b"}
+            else {"...insane popularity! CirnoGenius 🤝 SomaCruzFromAriaOfSorrow"};
+            return Ok(format!("{} your new speedgame is {}! Its popularity rating on SRL is {} TenshiWow o O ( {} ) ", command.msg.sender.name, game.replace('\"', ""), pop, tenshi_quote));
         },
         _ => Ok(String::from("")),
     }

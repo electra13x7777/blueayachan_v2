@@ -27,8 +27,6 @@ use crate::models::*;
 
 pub async fn set_command(command: Command) -> anyhow::Result<String>
 {
-    const ADMIN_CMDS: &'static [&'static str] = &["on", "off", "toggle", "timeout", "broadcaster", "mod", "all"];
-    const ADMIN_CMDS_ALIAS: &'static [&'static str] = &["t", "me", "b", "m", "a"];
     if !command.msg.badges.iter().any(|badge| badge.name == "broadcaster") && command.msg.sender.name.to_lowercase() != "electra_rta"
     {
         return Ok(format!("{}, this is a broadcaster only command!", command.msg.sender.name));
@@ -41,145 +39,53 @@ pub async fn set_command(command: Command) -> anyhow::Result<String>
             // validate
             // check input 1
             let cmds: Vec<BACommand> = query_cmd_to_vec();
-            let mut is_valid_cmd: bool = false;
-            let mut id_val: i32 = 0;
-            // CHECK COMMAND NAME
-            for c in cmds
+            let Some(id_val) = cmds.iter().find_map(|c| (c.name == argv_s[0]).then_some(c.id))
+            else
             {
-                if c.name == argv_s[0]
-                {
-                    is_valid_cmd = true;
-                    id_val = c.id;
-                }
-            }
-            if !is_valid_cmd{return Ok(String::from("Invalid Command. ARG1"));}
-            // CHECK COMMAND OP
-            if !ADMIN_CMDS.contains(&argv_s[1]) && !ADMIN_CMDS_ALIAS.contains(&argv_s[1])
-            {
-                return Ok(String::from("Invalid Command Op. ARG2"));
-            }
+                return Ok(String::from("Invalid Command. ARG1"));
+            };
             // maybe check arg count?
             let bacchannel: BACUser = query_user_data(&command.msg.channel_login);
-            match argv_s[1]
+            let res: &str = match argv_s[1]
             {
-                "on" =>
-                {
-                    let res: (bool, String) = set_channel_command_active(&bacchannel, id_val);
-                    match res.0
-                    {
-                        true => {return Ok(res.1);},
-                        false => {return Ok(res.1);},
-                    }
-                },
-                "off" =>
-                {
-                    let res: (bool, String) = set_channel_command_inactive(&bacchannel, id_val);
-                    match res.0
-                    {
-                        true => {return Ok(res.1);},
-                        false => {return Ok(res.1);},
-                    }
-                },
-                "toggle" =>
-                {
-                    let res: (bool, String) = toggle_channel_command_active(&bacchannel, id_val);
-                    match res.0
-                    {
-                        true => {return Ok(res.1);},
-                        false => {return Ok(res.1);},
-                    }
-                }
+                "on" => set_channel_command_active(&bacchannel, id_val),
+                "off" => set_channel_command_inactive(&bacchannel, id_val),
+                "toggle" => toggle_channel_command_active(&bacchannel, id_val),
                 // TIMEOUT REQUIRES A 3RD POSITIONAL ARGUMENT
                 "timeout" | "t" =>
                 {
-                    // CHECK NUMERIC
-                    for c in argv_s[2].chars()
+                    let timeout_val = match argv_s[2].parse::<i32>()
                     {
-                        if !c.is_numeric()
+                        Ok(timeout_val) if (0..=3600).contains(&timeout_val) =>
                         {
-                            return Ok(String::from("Bad input for ARG3. Please make sure that your last argument for augmenting the command timeout is a number between 0 and 3600 (upper bound inclusive)"));
+                            timeout_val
                         }
-                    }
-                    let timeout_val: i32 = argv_s[2].parse::<i32>().unwrap();
-                    // CHECK VALID TIMEOUT VALUE
-                    if timeout_val > 3600
-                    {
-                        return Ok(String::from("Bad input for ARG3. Please make sure that your last argument for augmenting the command timeout is a number between 0 and 3600 (upper bound inclusive)"));
-                    }
+                        _ => return Ok(String::from("Bad input for ARG3. Please make sure that your last argument for augmenting the command timeout is a number between 0 and 3600 (upper bound inclusive)")),
+                    };
                     // IF 0 IS PROVIDED WE SET THE TIMEOUT TO INACTIVE
                     if timeout_val == 0
                     {
                         //let res_dur: (bool, String) = set_channel_command_timeout_duration(timeout_val);
-                        let res: (bool, String) = set_channel_command_timeout_off(&bacchannel, id_val);
-                        match res.0
-                        {
-                            true => {return Ok(res.1);},
-                            false => {return Ok(res.1);},
-                        }
+                        let res: &str = set_channel_command_timeout_off(&bacchannel, id_val);
+                        return Ok(res.to_string());
                     }
-                    let to_res: (bool, String) = set_channel_command_timeout_on(&bacchannel, id_val);
-                    match to_res.0
-                    {
-                        true =>
-                        {
-                            let dur_res: (bool, String) = set_channel_command_timeout_duration(&query_user_data(&command.msg.channel_login), id_val, timeout_val);
-                            match dur_res.0
-                            {
-                                true => {return Ok(dur_res.1);},
-                                false => {return Ok(dur_res.1);},
-                            }
-                        },
-                        false =>
-                        {
-                            let dur_res: (bool, String) = set_channel_command_timeout_duration(&query_user_data(&command.msg.channel_login), id_val, timeout_val);
-                            match dur_res.0
-                            {
-                                true => {return Ok(dur_res.1);},
-                                false => {return Ok(dur_res.1);},
-                            }
-                        },
-                    }
+                    let _ = set_channel_command_timeout_on(&bacchannel, id_val);
+                    let dur_res: &str = set_channel_command_timeout_duration(&query_user_data(&command.msg.channel_login), id_val, timeout_val);
+                    dur_res
                 },
-                "broadcaster" | "b" =>
-                {
-                    let res: (bool, String) = set_channel_command_broadcaster_only(&bacchannel, id_val);
-                    match res.0
-                    {
-                        true => {return Ok(res.1);},
-                        false => {return Ok(res.1);},
-                    }
-                },
-                "mod" | "m" =>
-                {
-                    let res: (bool, String) = set_channel_command_mod_only(&bacchannel, id_val);
-                    match res.0
-                    {
-                        true => {return Ok(res.1);},
-                        false => {return Ok(res.1);},
-                    }
-                },
-                "all" | "a" =>
-                {
-                    let res: (bool, String) = set_channel_command_all(&bacchannel, id_val);
-                    match res.0
-                    {
-                        true => {return Ok(res.1);},
-                        false => {return Ok(res.1);},
-                    }
-                },
+                "broadcaster" | "b" => set_channel_command_broadcaster_only(&bacchannel, id_val),
+                "mod" | "m" => set_channel_command_mod_only(&bacchannel, id_val),
+                "all" | "a" => set_channel_command_all(&bacchannel, id_val),
                 _ =>
                 {
-                    return Ok("Invalid command op used!".to_string());
+                    return Ok(String::from("Invalid Command Op. ARG2"));
                 },
-            }
+            };
+            return Ok(res.to_string())
         },
         Runtype::Help =>
         {
             return Ok("This command sets the privilages and timeouts of a given command for a channel. It can only be used by the channel owner. Please refer to this pastebin for a full list of supported use cases: https://pastebin.com/z6zxSiB5".to_string());
-        },
-        Runtype::Hash =>
-        {
-            Ok(String::from(""))
         },
         _ => Ok(String::from("")),
     }

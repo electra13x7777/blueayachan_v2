@@ -142,23 +142,8 @@ async fn main() -> anyhow::Result<()>
                     {
                         //TODO: CHANGE THIS
                         //msg.name_color.map(|g| g.g).unwrap_or(0)
-                        let r: &u8 = match &msg.name_color.as_ref()
-                        {
-                            Some(r) => &r.r,
-                            None => &0,
-                        };
-                        let g: &u8 = match &msg.name_color.as_ref()
-                        {
-                            Some(g) => &g.g,
-                            None => &0
-                        };
-                        let b: &u8 = match &msg.name_color.as_ref()
-                        {
-                            Some(b) => &b.b,
-                            None => &0
-                        };
-
-                        println!("[{}] #{} <{}>: {}", dt_fmt.truecolor(138, 138, 138), msg.channel_login.truecolor(117, 97, 158), &msg.sender.name.truecolor(*r, *g, *b), msg.message_text)
+                        let (r, g, b) = msg.name_color.as_ref().map(|nc| (nc.r, nc.g, nc.b)).unwrap_or_default();
+                        println!("[{}] #{} <{}>: {}", dt_fmt.truecolor(138, 138, 138), msg.channel_login.truecolor(117, 97, 158), &msg.sender.name.truecolor(r, g, b), msg.message_text)
                     },
                     false => println!("[{}] #{} <{}>: {}", dt_fmt, msg.channel_login, &msg.sender.name, msg.message_text),
                 }
