@@ -165,17 +165,8 @@ async fn handle_priv(client: Twitch_Client, msg: PrivmsgMessage, handler: &Event
 {
     //tracing::info!("Received message: {:#?}", msg);
 
-    if let Some(_runtype) = commands::Runtype::try_from_msg(&msg.message_text)
+    if let Some(command) = commands::Command::try_from_msg(msg)
     {
-        let mut proc_msg: String = msg.message_text.to_lowercase();
-        proc_msg = String::from(&proc_msg[1..]); // send the name forced lowercase for case insensitivity /*name.len()*/
-        let text = proc_msg.as_str();
-        let (name_str, _args_start) = match text.split_once(' ')
-        {
-            Some((name_str, args_start)) => (name_str, args_start),
-            None => (text, ""),
-        };
-        // TODO: parameterize ARGS
-        handler.execute_command(String::from(name_str), client, msg).await.unwrap();
+        handler.execute_command(command, client).await.unwrap();
     }
 }

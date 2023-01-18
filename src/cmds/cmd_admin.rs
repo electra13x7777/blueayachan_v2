@@ -6,7 +6,7 @@ use twitch_irc::
 };
 
 
-use crate::db_ops::*;
+use crate::{db_ops::*, commands::{Runtype, Command}};
 use crate::models::*;
 
 // BROADCASTER ONLY COMMANDS
@@ -25,23 +25,17 @@ use crate::models::*;
 //          !set cmd mod                     m
 //          !set cmd all                     a
 
-pub async fn set_command(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
+pub async fn set_command(command: Command) -> anyhow::Result<String>
 {
-    if !msg_ctx.badges.iter().any(|badge| badge.name == "broadcaster") && &msg_ctx.sender.name.to_lowercase() != "electra_rta"
+    if !command.msg.badges.iter().any(|badge| badge.name == "broadcaster") && command.msg.sender.name.to_lowercase() != "electra_rta"
     {
-        return Ok(format!("{}, this is a broadcaster only command!", msg_ctx.sender.name));
+        return Ok(format!("{}, this is a broadcaster only command!", command.msg.sender.name));
     }
-    match runtype
+    match command.runtype
     {
-        b'!' =>
+        Runtype::Command =>
         {
-            let text = msg_ctx.message_text.as_str(); // get str from msg context
-            let (_name, args) = match text.split_once(' ')
-            {
-                Some((name, args)) => (name, args),
-                None => (text, ""),
-            };
-            let argv_s: Vec<&str> = args.split(' ').collect();
+            let argv_s: Vec<&str> = command.args().split(' ').collect();
             // validate
             // check input 1
             let cmds: Vec<BACommand> = query_cmd_to_vec();
@@ -51,7 +45,7 @@ pub async fn set_command(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result
                 return Ok(String::from("Invalid Command. ARG1"));
             };
             // maybe check arg count?
-            let bacchannel: BACUser = query_user_data(&msg_ctx.channel_login);
+            let bacchannel: BACUser = query_user_data(&command.msg.channel_login);
             let res: &str = match argv_s[1]
             {
                 "on" => set_channel_command_active(&bacchannel, id_val),
@@ -76,7 +70,7 @@ pub async fn set_command(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result
                         return Ok(res.to_string());
                     }
                     let _ = set_channel_command_timeout_on(&bacchannel, id_val);
-                    let dur_res: &str = set_channel_command_timeout_duration(&query_user_data(&msg_ctx.channel_login), id_val, timeout_val);
+                    let dur_res: &str = set_channel_command_timeout_duration(&query_user_data(&command.msg.channel_login), id_val, timeout_val);
                     dur_res
                 },
                 "broadcaster" | "b" => set_channel_command_broadcaster_only(&bacchannel, id_val),
@@ -89,7 +83,7 @@ pub async fn set_command(runtype: u8, msg_ctx: PrivmsgMessage) -> anyhow::Result
             };
             return Ok(res.to_string())
         },
-        b'?' =>
+        Runtype::Help =>
         {
             return Ok("This command sets the privilages and timeouts of a given command for a channel. It can only be used by the channel owner. Please refer to this pastebin for a full list of supported use cases: https://pastebin.com/z6zxSiB5".to_string());
         },

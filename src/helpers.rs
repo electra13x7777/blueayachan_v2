@@ -10,7 +10,7 @@ use std::
     path::Path,
     collections::HashMap,
     io,
-    io::{prelude::*, BufReader},
+    io::{prelude::*, BufReader}, borrow::Cow,
 };
 
 // TYPEOF //
@@ -39,4 +39,12 @@ pub fn readlines_to_map(filename: impl AsRef<Path>) -> io::Result<HashMap<String
         res.insert(key.to_string(), val.to_string());
     }
     return Ok(res);
+}
+
+pub fn to_lowercase_cow(s: &str) -> Cow<'_, str> {
+    if s.chars().all(char::is_lowercase) {
+        Cow::Borrowed(s)
+    } else {
+        Cow::Owned(s.to_lowercase())
+    }
 }
