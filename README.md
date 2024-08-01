@@ -51,4 +51,4 @@ all - Attempts to set the command to all chatters
 
 ### More to come soon!
 [Blueayachan Version 1](https://github.com/electra13x7777/blueayachan)
-#### Date Last Updated: 1/06/2023
+#### Date Last Updated: 7/31/2024

@@ -180,6 +180,13 @@ diesel::table! {
 }
 
 diesel::table! {
+    unis (id) {
+        id -> Int4,
+        name -> Varchar,
+    }
+}
+
+diesel::table! {
     vsavs (id) {
         id -> Int4,
         name -> Varchar,
@@ -217,5 +224,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     pictimeout,
     roles,
     sokus,
+    unis,
     vsavs,
 );

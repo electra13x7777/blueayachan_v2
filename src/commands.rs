@@ -6,49 +6,44 @@
                 threads.
 */
 
-use std::
-{
-    collections::HashMap,
-    future::Future,
-    pin::Pin,
-};
+use std::{collections::HashMap, future::Future, pin::Pin};
 
 use chrono::NaiveDateTime;
-use twitch_irc::
-{
-    login::StaticLoginCredentials,
-    message::{PrivmsgMessage}, SecureTCPTransport, TwitchIRCClient,
-};
 use colored::*;
-
+use twitch_irc::{
+    login::StaticLoginCredentials, message::PrivmsgMessage, SecureTCPTransport, TwitchIRCClient,
+};
 
 use crate::db_ops::*;
 use crate::models::*;
-
-
 
 pub type Twitch_Client = TwitchIRCClient<SecureTCPTransport, StaticLoginCredentials>;
 
 // CALLBACK TYPES (Blocking, Non-Blocking) [Function Pointers]
 //pub type Callback = fn(u8, PrivmsgMessage) -> anyhow::Result<String>;
-pub type Callback = Box<dyn Fn(u8, PrivmsgMessage) -> Pin<Box<dyn Future<Output = anyhow::Result<String>> + 'static + Send + Sync,>> + 'static + Send + Sync,>;
+pub type Callback = Box<
+    dyn Fn(
+            u8,
+            PrivmsgMessage,
+        ) -> Pin<Box<dyn Future<Output = anyhow::Result<String>> + 'static + Send + Sync>>
+        + 'static
+        + Send
+        + Sync,
+>;
 
-
-pub struct EventHandler
-{
+pub struct EventHandler {
     pub bot_nick: String,
     pub command_map: HashMap<String, Callback>,
 }
 
-impl EventHandler
-{
+impl EventHandler {
     // Thank you Azuchang!
     // Callback returns a dynamic future
     // Future yields a Result that can be unwrapped into a String
     pub fn add_command<Cb, F>(&mut self, name: String, function: Cb)
     where
-    Cb: Fn(u8, PrivmsgMessage) -> F + 'static + Send + Sync,
-    F: Future<Output = anyhow::Result<String>> + 'static + Send + Sync,
+        Cb: Fn(u8, PrivmsgMessage) -> F + 'static + Send + Sync,
+        F: Future<Output = anyhow::Result<String>> + 'static + Send + Sync,
     {
         let cb = Box::new(move |a, b| Box::pin(function(a, b)) as _);
         self.command_map.insert(name, cb);
@@ -70,59 +65,84 @@ impl EventHandler
 
         FOR COMMAND IMPLEMENTATIONS SEE ~/cmds/
     */
-    pub async fn execute_command(&self, name: String, client: Twitch_Client, msg_ctx: PrivmsgMessage) -> anyhow::Result<()>
-    {
+    pub async fn execute_command(
+        &self,
+        name: String,
+        client: Twitch_Client,
+        msg_ctx: PrivmsgMessage,
+    ) -> anyhow::Result<()> {
         const COLOR_FLAG: bool = true;
         //const TRACK_CC: bool = true;
         let mut is_pic: bool = false;
-        let mut error_message: Option<String> = None;
-        if self.command_map.contains_key(&name)
-        {
+        let mut io_flag: (bool, String) = (false, "".to_string());
+        if self.command_map.contains_key(&name) {
             handle_bac_user_in_db(&msg_ctx.sender.name, &msg_ctx.sender.id); // Updates user database
-            // TODO: check if command is allowed in channel
-            //let cmd_name = &name.clone();
-            if let Some(cmd_id) = query_command_id(&name)
-            {
+                                                                             // TODO: check if command is allowed in channel
+                                                                             //let cmd_name = &name.clone();
+            let cmd_id: i32 = query_command_id(&name).unwrap_or(0);
+            if cmd_id != 0 && !io_flag.0 {
                 //let channel_name = &msg_ctx.channel_login.clone()
                 //let bacchannel: BACUser = query_user_data(msg_ctx.channel_login.clone());
                 // IF WE FIND A CHANNEL COMMAND ENTRY HANDLE IT
                 // IF WE DON'T FIND ONE INSERT IT THEN IGNORE AND CONTINUE
-                if let Some(cc) = query_channel_command(&query_user_data(&msg_ctx.channel_login), cmd_id)
+                if let Some(cc) =
+                    query_channel_command(&query_user_data(&msg_ctx.channel_login), cmd_id)
                 {
                     let bacuser: BACUser = query_user_data(&msg_ctx.sender.name);
                     // COMMAND IS INACTIVE
-                    if !cc.is_active && error_message.is_none()
-                    {
-                        error_message = Some(format!("This command is not available in {}\'s channel. Sorry {}", msg_ctx.channel_login, msg_ctx.sender.name));
+                    if !cc.is_active && !io_flag.0 {
+                        io_flag.0 = !io_flag.0;
+                        io_flag.1 = format!(
+                            "This command is not available in {}\'s channel. Sorry {}",
+                            msg_ctx.channel_login, msg_ctx.sender.name
+                        );
                     }
-                    let badges: Vec<&str> = msg_ctx.badges.iter().map(|b| b.name.as_str()).collect();
+                    let badges: Vec<&str> =
+                        msg_ctx.badges.iter().map(|b| b.name.as_str()).collect();
                     // COMMAND IS BROADCASTER ONLY
-                    if cc.is_broadcaster_only && error_message.is_none() && !badges.contains(&"broadcaster")
-                    {
-                        error_message = Some(format!("This command is not available only to Broadcasters in {}\'s channel. Sorry {}", msg_ctx.channel_login, msg_ctx.sender.name));
+                    if cc.is_broadcaster_only && !io_flag.0 && !badges.contains(&"broadcaster") {
+                        io_flag.0 = !io_flag.0;
+                        io_flag.1 = format!("This command is not available only to Broadcasters in {}\'s channel. Sorry {}", msg_ctx.channel_login, msg_ctx.sender.name);
                     }
                     // COMMAND IS BROADCASTER, MOD, VIP ONLY
-                    if cc.is_mod_only && error_message.is_none() && !badges.contains(&"broadcaster") && !badges.contains(&"moderator") && !badges.contains(&"vip")
+                    if cc.is_mod_only
+                        && !io_flag.0
+                        && !badges.contains(&"broadcaster")
+                        && !badges.contains(&"moderator")
+                        && !badges.contains(&"vip")
                     {
-                        error_message = Some(format!("This command is not available to non-mods in {}\'s channel. Sorry {}", msg_ctx.channel_login, msg_ctx.sender.name));
+                        io_flag.0 = !io_flag.0;
+                        io_flag.1 = format!(
+                            "This command is not available to non-mods in {}\'s channel. Sorry {}",
+                            msg_ctx.channel_login, msg_ctx.sender.name
+                        );
                     }
-                    if cmd_id == 7 // SKIP PIC COMMAND FOR NOW
-                    {
+                    // SKIP PIC COMMAND FOR NOW
+                    if cmd_id == 7 {
                         is_pic = true;
                         //io_flag.0 = true;
                     }
                     // CHECK FOR TIMEOUT
-                    if cc.has_timeout
-                    {
+                    if cc.has_timeout {
                         let ndt_now: NaiveDateTime = chrono::offset::Local::now().naive_local();
-                        let timeout_out: (bool, i32) = handle_command_timeout(&query_user_data(&msg_ctx.channel_login), &bacuser, cmd_id, ndt_now, cc.timeout_dur);
-                        if !timeout_out.0 // User has not waited for the timeout length
-                        {
-                            error_message = Some(format!("{}, please wait for {} more second(s)", msg_ctx.sender.name, cc.timeout_dur - timeout_out.1));
+                        let timeout_out: (bool, i32) = handle_command_timeout(
+                            &query_user_data(&msg_ctx.channel_login),
+                            &bacuser,
+                            cmd_id,
+                            ndt_now,
+                            cc.timeout_dur,
+                        );
+                        // User has not waited for the timeout length
+                        if !timeout_out.0 {
+                            io_flag.0 = !io_flag.0;
+                            io_flag.1 = format!(
+                                "{}, please wait for {} more second(s)",
+                                msg_ctx.sender.name,
+                                cc.timeout_dur - timeout_out.1
+                            );
                         }
                     }
-                }
-                else // VALIDATED
+                } else // VALIDATED
                 {
                     let bac_channel = query_user_data(&msg_ctx.channel_login);
                     insert_channel_command(&bac_channel, cmd_id);
@@ -130,56 +150,86 @@ impl EventHandler
             }
 
             let dt_fmt = chrono::offset::Local::now().format("%H:%M:%S").to_string();
-            match error_message
-            {
-                Some(error_message) if !is_pic =>
-                {
-                    match COLOR_FLAG
-                    {
-                        true => println!("[{}] #{} <{}>: {}", dt_fmt.truecolor(138, 138, 138), msg_ctx.channel_login.truecolor(117, 97, 158), self.bot_nick.red(), error_message),
-                        false => println!("[{}] #{} <{}>: {}", dt_fmt, msg_ctx.channel_login, self.bot_nick, error_message),
-                    }
-                    client.say(msg_ctx.channel_login, error_message).await?;
+            if !io_flag.0 || is_pic {
+                const COMMAND_INDEX: usize = 0;
+                let runtype: u8 = msg_ctx.message_text.as_bytes()[COMMAND_INDEX]; // gets a byte literal (Ex. b'!')
+                let callback = self
+                    .command_map
+                    .get(&name)
+                    .expect("Could not execute function pointer!");
+                let res = callback(runtype, msg_ctx.clone()).await.unwrap();
+                if res.is_empty() {
+                    return Ok(());
+                } // if we have nothing to send skip the send
+                match COLOR_FLAG {
+                    true => println!(
+                        "[{}] #{} <{}>: {}",
+                        dt_fmt.truecolor(138, 138, 138),
+                        msg_ctx.channel_login.truecolor(117, 97, 158),
+                        self.bot_nick.red(),
+                        res
+                    ),
+                    false => println!(
+                        "[{}] #{} <{}>: {}",
+                        dt_fmt, msg_ctx.channel_login, self.bot_nick, res
+                    ),
                 }
-                _ =>
-                {
-                    const COMMAND_INDEX: usize = 0;
-                    let runtype: u8 = msg_ctx.message_text.as_bytes()[COMMAND_INDEX]; // gets a byte literal (Ex. b'!')
-                    let callback = self.command_map.get(&name).expect("Could not execute function pointer!");
-                    let res = callback(runtype, msg_ctx.clone()).await.unwrap();
-                    if res.is_empty(){return Ok(());} // if we have nothing to send skip the send
-                    match COLOR_FLAG
-                    {
-                        true => println!("[{}] #{} <{}>: {}", dt_fmt.truecolor(138, 138, 138), msg_ctx.channel_login.truecolor(117, 97, 158), self.bot_nick.red(), res),
-                        false => println!("[{}] #{} <{}>: {}", dt_fmt, msg_ctx.channel_login, self.bot_nick, res),
-                    }
-                    client.say(msg_ctx.channel_login, res).await?;
+                client.say(msg_ctx.channel_login, res).await?;
+            } else {
+                match COLOR_FLAG {
+                    true => println!(
+                        "[{}] #{} <{}>: {}",
+                        dt_fmt.truecolor(138, 138, 138),
+                        msg_ctx.channel_login.truecolor(117, 97, 158),
+                        self.bot_nick.red(),
+                        io_flag.1
+                    ),
+                    false => println!(
+                        "[{}] #{} <{}>: {}",
+                        dt_fmt, msg_ctx.channel_login, self.bot_nick, io_flag.1
+                    ),
                 }
+                client.say(msg_ctx.channel_login, io_flag.1).await?;
             }
-
         }
         Ok(())
     }
 
     // OLD IMPLEMENTATION FOR BACKWARDS COMPAT
     // TODO: REMOVE
-    pub async fn execute_command_old(&self, name: String, client: Twitch_Client, msg: PrivmsgMessage) -> anyhow::Result<()>
-    {
-        if self.command_map.contains_key(&name)
-        {
+    pub async fn execute_command_old(
+        &self,
+        name: String,
+        client: Twitch_Client,
+        msg: PrivmsgMessage,
+    ) -> anyhow::Result<()> {
+        if self.command_map.contains_key(&name) {
             // TODO: check if command is allowed in channel
             handle_bac_user_in_db(&msg.sender.name, &msg.sender.id); // Updates user database
             const COMMAND_INDEX: usize = 0;
             let runtype: u8 = msg.message_text.as_bytes()[COMMAND_INDEX]; // gets a byte literal (Ex. b'!')
-            let callback = self.command_map.get(&name).expect("Could not execute function pointer!");
+            let callback = self
+                .command_map
+                .get(&name)
+                .expect("Could not execute function pointer!");
             let res = callback(runtype, msg.clone()).await.unwrap();
-            if res.is_empty(){return Ok(());} // if we have nothing to send skip the send
+            if res.is_empty() {
+                return Ok(());
+            } // if we have nothing to send skip the send
             let dt_fmt = chrono::offset::Local::now().format("%H:%M:%S").to_string();
             const COLOR_FLAG: bool = true;
-            match COLOR_FLAG
-            {
-                true => println!("[{}] #{} <{}>: {}", dt_fmt.truecolor(138, 138, 138), msg.channel_login.truecolor(117, 97, 158), self.bot_nick.red(), res),
-                false => println!("[{}] #{} <{}>: {}", dt_fmt, msg.channel_login, self.bot_nick, res),
+            match COLOR_FLAG {
+                true => println!(
+                    "[{}] #{} <{}>: {}",
+                    dt_fmt.truecolor(138, 138, 138),
+                    msg.channel_login.truecolor(117, 97, 158),
+                    self.bot_nick.red(),
+                    res
+                ),
+                false => println!(
+                    "[{}] #{} <{}>: {}",
+                    dt_fmt, msg.channel_login, self.bot_nick, res
+                ),
             }
             client.say(msg.channel_login, res).await?;
         }
@@ -188,20 +238,16 @@ impl EventHandler
 }
 
 // AZUCHANG'S BOILERPLATE
-pub enum Runtype
-{
+pub enum Runtype {
     Command,
     Help,
     Hash,
     Tilde,
 }
 
-impl Runtype
-{
-    pub fn try_from_msg(msg_ctx: &str) -> Option<Runtype>
-    {
-        let rt = match msg_ctx.bytes().next()?
-        {
+impl Runtype {
+    pub fn try_from_msg(msg_ctx: &str) -> Option<Runtype> {
+        let rt = match msg_ctx.bytes().next()? {
             b'!' => Self::Command,
             b'?' => Self::Help,
             b'#' => Self::Hash,
@@ -215,26 +261,20 @@ impl Runtype
 ///////////////////////////////////////////////////////////////////////////////
 //                          COMMAND IMPLEMENTATIONS                          //
 ///////////////////////////////////////////////////////////////////////////////
-pub async fn test_command(runtype: u8, _msg_ctx: PrivmsgMessage) -> anyhow::Result<String>
-{
-    match runtype
-    {
-        b'!' =>
-        {
+pub async fn test_command(runtype: u8, _msg_ctx: PrivmsgMessage) -> anyhow::Result<String> {
+    match runtype {
+        b'!' => {
             return Ok(String::from("Test Command Block"));
-        },
-        b'?' =>
-        {
+        }
+        b'?' => {
             return Ok(String::from("Test Help Block"));
-        },
-        b'#' =>
-        {
+        }
+        b'#' => {
             return Ok(String::from("Test Hash Block"));
-        },
-        b'~' =>
-        {
+        }
+        b'~' => {
             return Ok(String::from("Test Tilde Block"));
-        },
+        }
         _ => Ok(String::from("")),
     }
 }

@@ -1,16 +1,14 @@
-use diesel::prelude::*;
 use crate::schema::*;
 use chrono::NaiveDateTime;
+use diesel::prelude::*;
 
 ///////////////////////////////////////////////////////////////////////////////
 //                           USER, ROLES, USERROLES                          //
 ///////////////////////////////////////////////////////////////////////////////
 
-
-#[derive(Insertable)]//, Identifiable)]
+#[derive(Insertable)] //, Identifiable)]
 #[diesel(table_name = blueayachanuser)]
-pub struct NewBACUser<'a>
-{
+pub struct NewBACUser<'a> {
     pub user_nick: &'a str,
     pub num_commands: i32,
     pub date_added: NaiveDateTime,
@@ -19,8 +17,7 @@ pub struct NewBACUser<'a>
 
 #[derive(Queryable, Selectable)]
 #[diesel(table_name = blueayachanuser)]
-pub struct BACUser
-{
+pub struct BACUser {
     pub id: i32,
     pub user_nick: String,
     pub num_commands: i32,
@@ -49,23 +46,20 @@ last_pasta TIMESTAMP DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
 last_pic TIMESTAMP DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
 */
 
-#[derive(Insertable)]//, Identifiable)]
+#[derive(Insertable)] //, Identifiable)]
 #[diesel(table_name = roles)]
-pub struct NewRole<'a>
-{
+pub struct NewRole<'a> {
     pub role_name: &'a str,
     pub date_added: NaiveDateTime,
 }
 
 #[derive(Queryable, Selectable)]
 #[diesel(table_name = roles)]
-pub struct Role
-{
+pub struct Role {
     pub id: i32,
     pub role_name: String,
     pub date_added: NaiveDateTime,
 }
-
 
 //#[diesel(belongs_to(i32, foreign_key = user_id))]
 //#[diesel(belongs_to(roles, foreign_key = role_id))]
@@ -73,11 +67,10 @@ pub struct Role
 #[diesel(belongs_to(BACUser, foreign_key = user_id))]
 #[diesel(belongs_to(Role, foreign_key = role_id))]
 #[diesel(table_name = blueayachanuser_roles)]
-pub struct NewBAC_User_Role
-{
+pub struct NewBAC_User_Role {
     pub user_id: i32,
     pub role_id: i32,
-    pub created: NaiveDateTime
+    pub created: NaiveDateTime,
 }
 
 #[derive(Queryable, Selectable, Associations)]
@@ -86,8 +79,7 @@ pub struct NewBAC_User_Role
 #[diesel(belongs_to(BACUser, foreign_key = user_id))]
 #[diesel(belongs_to(Role, foreign_key = role_id))]
 #[diesel(table_name = blueayachanuser_roles)]
-pub struct BAC_User_Role
-{
+pub struct BAC_User_Role {
     pub id: i32,
     pub user_id: i32,
     pub role_id: i32,
@@ -100,16 +92,14 @@ pub struct BAC_User_Role
 
 #[derive(Insertable)]
 #[diesel(table_name = dreamboumtweets)]
-pub struct New_DBTweet<'a>
-{
+pub struct New_DBTweet<'a> {
     pub tweet: &'a str,
     pub tweet_date: &'a str,
 }
 
 #[derive(Queryable, Selectable)]
 #[diesel(table_name = dreamboumtweets)]
-pub struct DBTweet
-{
+pub struct DBTweet {
     pub id: i32,
     pub tweet: String,
     pub tweet_date: String,
@@ -121,16 +111,14 @@ pub struct DBTweet
 
 #[derive(Insertable)]
 #[diesel(table_name = nocturnedemons)]
-pub struct New_NDemon<'a>
-{
+pub struct New_NDemon<'a> {
     pub demon_name: &'a str,
     pub demon_img_link: &'a str,
 }
 
 #[derive(Queryable, Selectable)]
 #[diesel(table_name = nocturnedemons)]
-pub struct NDemon
-{
+pub struct NDemon {
     pub id: i32,
     pub demon_name: String,
     pub demon_img_link: String,
@@ -139,8 +127,7 @@ pub struct NDemon
 #[derive(Insertable)]
 #[diesel(belongs_to(blueayachanuser, foreign_key = user_id))]
 #[diesel(table_name = bac_user_demons)]
-pub struct New_SavedNDemon
-{
+pub struct New_SavedNDemon {
     pub user_id: i32, // BACUser
     // only updates when saved
     pub saved_demon_id: i32,
@@ -152,8 +139,7 @@ pub struct New_SavedNDemon
 
 #[derive(Queryable, Selectable)]
 #[diesel(table_name = bac_user_demons)]
-pub struct SavedNDemon
-{
+pub struct SavedNDemon {
     pub id: i32,
     pub user_id: i32,
     //pub saved_demon_name: String,
@@ -166,16 +152,14 @@ pub struct SavedNDemon
 
 #[derive(Insertable)]
 #[diesel(table_name = pictimeout)]
-pub struct NewPicTimeout
-{
+pub struct NewPicTimeout {
     pub user_id: i32, // foreign_key from blueayachanuser
     pub last_pic: NaiveDateTime,
 }
 
 #[derive(Queryable, Selectable)]
 #[diesel(table_name = pictimeout)]
-pub struct PicTimeout
-{
+pub struct PicTimeout {
     pub id: i32,
     pub user_id: i32,
     pub last_pic: NaiveDateTime,
@@ -183,8 +167,7 @@ pub struct PicTimeout
 
 #[derive(Insertable)]
 #[diesel(table_name = botchannels)]
-pub struct NewBotChannel<'a>
-{
+pub struct NewBotChannel<'a> {
     pub channel_name: &'a str, // foreign_key from botchannels
     pub channel_twitch_id: &'a str,
     pub last_updated: NaiveDateTime,
@@ -192,8 +175,7 @@ pub struct NewBotChannel<'a>
 
 #[derive(Queryable, Selectable)]
 #[diesel(table_name = botchannels)]
-pub struct BotChannel
-{
+pub struct BotChannel {
     pub id: i32,
     pub channel_name: String, // foreign_key from botchannels
     pub channel_twitch_id: String,
@@ -202,8 +184,7 @@ pub struct BotChannel
 
 #[derive(Insertable)]
 #[diesel(table_name = channelcommands)]
-pub struct NewChannelCommands
-{
+pub struct NewChannelCommands {
     //pub channel_twitch_id: &'a str, // foreign_key from botchannels
     pub channel_bac_id: i32,
     pub command_id: i32, // foreign_key from blueayacommands
@@ -219,8 +200,7 @@ pub struct NewChannelCommands
 #[derive(Queryable, Selectable)]
 //#[primary_key(channel_bac_id, command_id)]
 #[diesel(table_name = channelcommands)]
-pub struct ChannelCommands
-{
+pub struct ChannelCommands {
     pub id: i32,
     //pub channel_twitch_id: String, // foreign_key from botchannels
     pub channel_bac_id: i32,
@@ -236,8 +216,7 @@ pub struct ChannelCommands
 
 #[derive(Insertable)]
 #[diesel(table_name = commandtimeout)]
-pub struct NewCommandTimeout
-{
+pub struct NewCommandTimeout {
     //pub channel_twitch_id: &'a str, // foreign_key from botchannels
     //pub user_twitch_id: &'a str,
     pub channel_bac_id: i32,
@@ -248,8 +227,7 @@ pub struct NewCommandTimeout
 
 #[derive(Queryable, Selectable)]
 #[diesel(table_name = commandtimeout)]
-pub struct CommandTimeout
-{
+pub struct CommandTimeout {
     pub id: i32,
     //pub channel_twitch_id: String, // foreign_key from botchannels
     //pub user_twitch_id: String,
@@ -293,5 +271,6 @@ generate_simple_db_structs!(akbs, New_AKB, AKB, 'a);
 generate_simple_db_structs!(vsavs, New_Vsav, Vsav, 'a);
 generate_simple_db_structs!(jojos, New_Jojo, Jojo, 'a);
 generate_simple_db_structs!(millions, New_Millions, Millions, 'a);
+generate_simple_db_structs!(unis, New_Uni, Uni, 'a);
 generate_simple_db_structs!(kinohackers, New_Kinohack, Kinohack, 'a);
 generate_simple_db_structs!(blueayacommands, New_BACommand, BACommand, 'a);
